@@ -1,0 +1,660 @@
+# 📁 Complete Project Structure
+
+## Directory Layout
+
+```
+ai-agent-builder/
+├── 📁 backend/                          # Python FastAPI backend
+│   ├── 📁 alembic/                      # Database migrations
+│   │   ├── 📄 env.py                    # Alembic environment config
+│   │   ├── 📄 script.py.mako            # Migration template
+│   │   └── 📁 versions/                 # Migration files
+│   │       └── 📄 001_initial.py        # Initial database schema
+│   ├── 📁 config/                       # Application configuration
+│   │   ├── 📄 __init__.py
+│   │   └── 📄 settings.py               # Pydantic settings
+│   ├── 📁 middleware/                   # Custom middleware
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 cors.py                   # CORS configuration
+│   │   ├── 📄 security.py               # Security middleware
+│   │   └── 📄 rate_limiting.py          # Rate limiting
+│   ├── 📁 models/                       # SQLAlchemy models
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 base.py                   # Base model class
+│   │   ├── 📄 database.py               # Database connection
+│   │   ├── 📄 user.py                   # User models
+│   │   └── 📄 agent.py                  # Agent models
+│   ├── 📁 routers/                      # API route handlers
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 auth.py                   # Authentication routes
+│   │   ├── 📄 agents.py                 # Agent management
+│   │   ├── 📄 knowledge.py              # Knowledge base
+│   │   ├── 📄 chat.py                   # Real-time chat
+│   │   └── 📄 integrations.py           # External integrations
+│   ├── 📁 services/                     # Business logic services
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 llm_service.py            # LLM integration
+│   │   ├── 📄 vector_service.py         # Vector database
+│   │   ├── 📄 email_service.py          # Email handling
+│   │   ├── 📄 file_service.py           # File operations
+│   │   ├── 📄 security_service.py       # Security utilities
+│   │   ├── 📄 audit_service.py          # Audit logging
+│   │   └── 📄 notification_service.py   # Notifications
+│   ├── 📁 integrations/                 # EMR integrations
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 base_integration.py       # Base integration class
+│   │   ├── 📄 epic_integration.py       # Epic EHR
+│   │   ├── 📄 athenahealth_integration.py # athenaHealth
+│   │   └── 📄 integration_manager.py    # Integration coordinator
+│   ├── 📁 utils/                        # Utility functions
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 validators.py             # Input validation
+│   │   ├── 📄 helpers.py                # Helper functions
+│   │   └── 📄 constants.py              # Application constants
+│   ├── 📁 tests/                        # Test suite
+│   │   ├── 📄 __init__.py
+│   │   ├── 📄 conftest.py               # Test configuration
+│   │   ├── 📄 test_auth.py              # Authentication tests
+│   │   ├── 📄 test_agents.py            # Agent tests
+│   │   └── 📄 test_integrations.py      # Integration tests
+│   ├── 📄 main.py                       # FastAPI application
+│   ├── 📄 requirements.txt              # Python dependencies
+│   ├── 📄 alembic.ini                   # Alembic configuration
+│   ├── 📄 Dockerfile                    # Development Docker image
+│   ├── 📄 Dockerfile.prod               # Production Docker image
+│   └── 📄 .env                          # Environment variables
+├── 📁 frontend/                         # React frontend application
+│   ├── 📁 public/                       # Static assets
+│   │   ├── 📄 index.html                # Main HTML template
+│   │   ├── 📄 manifest.json             # PWA manifest
+│   │   ├── 📄 sw.js                     # Service worker
+│   │   └── 📁 icons/                    # PWA icons
+│   ├── 📁 src/                          # Source code
+│   │   ├── 📁 components/               # React components
+│   │   │   ├── 📄 Dashboard.jsx         # Main dashboard
+│   │   │   ├── 📄 AgentBuilder.jsx      # Agent creation
+│   │   │   ├── 📄 ChatInterface.jsx     # Chat UI
+│   │   │   ├── 📄 Analytics.jsx         # Analytics dashboard
+│   │   │   └── 📄 Settings.jsx          # Settings panel
+│   │   ├── 📁 services/                 # API services
+│   │   │   ├── 📄 api.js                # API client
+│   │   │   ├── 📄 auth.js               # Authentication
+│   │   │   └── 📄 websocket.js          # WebSocket client
+│   │   ├── 📁 hooks/                    # Custom React hooks
+│   │   │   ├── 📄 useAuth.js            # Authentication hook
+│   │   │   ├── 📄 useWebSocket.js       # WebSocket hook
+│   │   │   └── 📄 useLocalStorage.js    # Local storage hook
+│   │   ├── 📁 utils/                    # Utility functions
+│   │   │   ├── 📄 helpers.js            # Helper functions
+│   │   │   └── 📄 constants.js          # Constants
+│   │   ├── 📄 App.jsx                   # Main app component
+│   │   ├── 📄 index.js                  # Entry point
+│   │   └── 📄 index.css                 # Global styles
+│   ├── 📄 package.json                  # Node.js dependencies
+│   ├── 📄 tailwind.config.js            # Tailwind configuration
+│   ├── 📄 Dockerfile.dev                # Development Docker image
+│   ├── 📄 Dockerfile.prod               # Production Docker image
+│   └── 📄 nginx.conf                    # Nginx configuration
+├── 📁 nginx/                            # Nginx configurations
+│   ├── 📄 nginx.conf                    # Development config
+│   ├── 📄 nginx.prod.conf               # Production config
+│   └── 📁 ssl/                          # SSL certificates
+├── 📁 scripts/                          # Utility scripts
+│   ├── 📄 setup.sh                      # Complete setup script
+│   ├── 📄 init-db.sql                   # Database initialization
+│   ├── 📄 backup.sh                     # Database backup
+│   ├── 📄 deploy.sh                     # Deployment script
+│   └── 📄 health-check.sh               # Health monitoring
+├── 📁 k8s/                              # Kubernetes manifests
+│   ├── 📄 namespace.yaml                # Kubernetes namespace
+│   ├── 📄 configmap.yaml                # Configuration
+│   ├── 📄 secrets.yaml                  # Secrets
+│   ├── 📄 postgres.yaml                 # PostgreSQL deployment
+│   ├── 📄 redis.yaml                    # Redis deployment
+│   ├── 📄 backend.yaml                  # Backend deployment
+│   ├── 📄 frontend.yaml                 # Frontend deployment
+│   └── 📄 ingress.yaml                  # Ingress configuration
+├── 📁 monitoring/                       # Monitoring setup
+│   ├── 📄 prometheus.yml                # Prometheus config
+│   ├── 📄 grafana-dashboard.json        # Grafana dashboard
+│   └── 📄 alerting-rules.yml            # Alert rules
+├── 📁 docs/                             # Documentation
+│   ├── 📄 api-reference.md              # API documentation
+│   ├── 📄 user-guide.md                 # User manual
+│   ├── 📄 admin-guide.md                # Admin manual
+│   └── 📄 deployment.md                 # Deployment guide
+├── 📁 .github/                          # GitHub configuration
+│   └── 📁 workflows/                    # CI/CD workflows
+│       ├── 📄 ci.yml                    # Continuous integration
+│       ├── 📄 security.yml              # Security scanning
+│       └── 📄 deploy.yml                # Deployment workflow
+├── 📄 docker-compose.yml                # Development Docker setup
+├── 📄 docker-compose.prod.yml           # Production Docker setup
+├── 📄 docker-compose.override.yml       # Local overrides
+├── 📄 .env.example                      # Environment template
+├── 📄 .gitignore                        # Git ignore rules
+├── 📄 .dockerignore                     # Docker ignore rules
+├── 📄 README.md                         # Project documentation
+├── 📄 CONTRIBUTING.md                   # Contribution guidelines
+├── 📄 LICENSE                           # License file
+└── 📄 CHANGELOG.md                      # Version changelog
+```
+
+## 🚀 Complete Setup Script
+
+Save this as `setup.sh` in your project root:
+
+```bash
+#!/bin/bash
+
+# AI Agent Builder - Complete Setup Script
+# This script sets up the entire development environment
+
+set -e  # Exit on any error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check system requirements
+check_requirements() {
+    log_info "Checking system requirements..."
+    
+    # Check Python
+    if command_exists python3; then
+        PYTHON_VERSION=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2)
+        REQUIRED_PYTHON="3.11"
+        if [ "$(printf '%s\n' "$REQUIRED_PYTHON" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_PYTHON" ]; then
+            log_error "Python 3.11+ is required. Current version: $PYTHON_VERSION"
+            exit 1
+        fi
+        log_success "Python $PYTHON_VERSION found"
+    else
+        log_error "Python 3 is not installed"
+        exit 1
+    fi
+    
+    # Check Node.js
+    if command_exists node; then
+        NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+        if [ "$NODE_VERSION" -lt 18 ]; then
+            log_error "Node.js 18+ is required. Current version: $NODE_VERSION"
+            exit 1
+        fi
+        log_success "Node.js v$(node --version) found"
+    else
+        log_error "Node.js is not installed"
+        exit 1
+    fi
+    
+    # Check Docker
+    if command_exists docker; then
+        log_success "Docker found"
+    else
+        log_warning "Docker not found. Install Docker for easier setup"
+    fi
+    
+    # Check Git
+    if command_exists git; then
+        log_success "Git found"
+    else
+        log_error "Git is required"
+        exit 1
+    fi
+}
+
+# Create project structure
+create_structure() {
+    log_info "Creating project structure..."
+    
+    # Backend directories
+    mkdir -p backend/{models,routers,services,utils,config,middleware,integrations,tests}
+    mkdir -p backend/alembic/versions
+    
+    # Frontend directories
+    mkdir -p frontend/{src/{components,services,hooks,utils},public/icons}
+    
+    # Infrastructure directories
+    mkdir -p nginx/ssl
+    mkdir -p k8s
+    mkdir -p monitoring
+    mkdir -p scripts
+    mkdir -p docs
+    mkdir -p .github/workflows
+    
+    # Data directories
+    mkdir -p uploads logs
+    
+    # Create __init__.py files
+    touch backend/models/__init__.py
+    touch backend/routers/__init__.py
+    touch backend/services/__init__.py
+    touch backend/utils/__init__.py
+    touch backend/config/__init__.py
+    touch backend/middleware/__init__.py
+    touch backend/integrations/__init__.py
+    touch backend/tests/__init__.py
+    
+    log_success "Project structure created"
+}
+
+# Setup backend
+setup_backend() {
+    log_info "Setting up backend..."
+    
+    cd backend
+    
+    # Create virtual environment
+    log_info "Creating Python virtual environment..."
+    python3 -m venv venv
+    source venv/bin/activate
+    
+    # Upgrade pip
+    pip install --upgrade pip
+    
+    # Create requirements.txt if it doesn't exist
+    if [ ! -f requirements.txt ]; then
+        log_info "Creating requirements.txt..."
+        cat > requirements.txt << 'EOF'
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.7
+alembic==1.12.1
+pydantic[email]==2.5.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+python-dotenv==1.0.0
+openai==1.3.5
+langchain==0.0.335
+langchain-openai==0.0.2
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+pinecone-client==2.2.4
+pypdf2==3.0.1
+python-docx==0.8.11
+redis==5.0.1
+websockets==12.0
+cryptography==41.0.7
+pyotp==2.9.0
+qrcode[pil]==7.4.2
+aiohttp==3.9.1
+requests==2.31.0
+prometheus-client==0.19.0
+structlog==23.2.0
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+EOF
+    fi
+    
+    # Install dependencies
+    log_info "Installing Python dependencies..."
+    pip install -r requirements.txt
+    
+    # Initialize Alembic if not already done
+    if [ ! -f alembic.ini ]; then
+        log_info "Initializing Alembic..."
+        alembic init alembic
+    fi
+    
+    cd ..
+    log_success "Backend setup complete"
+}
+
+# Setup frontend
+setup_frontend() {
+    log_info "Setting up frontend..."
+    
+    cd frontend
+    
+    # Initialize React app if package.json doesn't exist
+    if [ ! -f package.json ]; then
+        log_info "Creating React application..."
+        npx create-react-app . --template typescript
+    fi
+    
+    # Install additional dependencies
+    log_info "Installing frontend dependencies..."
+    npm install lucide-react recharts
+    npm install -D tailwindcss postcss autoprefixer @types/node
+    
+    # Initialize Tailwind CSS if not already done
+    if [ ! -f tailwind.config.js ]; then
+        log_info "Initializing Tailwind CSS..."
+        npx tailwindcss init -p
+        
+        # Update Tailwind config
+        cat > tailwind.config.js << 'EOF'
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+EOF
+        
+        # Update index.css
+        cat > src/index.css << 'EOF'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+EOF
+    fi
+    
+    cd ..
+    log_success "Frontend setup complete"
+}
+
+# Create environment file
+create_env_file() {
+    log_info "Creating environment configuration..."
+    
+    if [ ! -f .env ]; then
+        cp .env.example .env || cat > .env << 'EOF'
+# Database Configuration
+DATABASE_URL=postgresql://postgres:password@localhost:5432/ai_agents_db
+
+# Security Keys (CHANGE IN PRODUCTION!)
+SECRET_KEY=dev-secret-key-change-in-production
+ENCRYPTION_KEY=dev-encryption-key-32-characters!!
+
+# LLM Configuration
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-3.5-turbo
+
+# Vector Database
+VECTOR_PROVIDER=faiss
+
+# Application URLs
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:8000
+
+# Environment
+ENVIRONMENT=development
+DEBUG=true
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# File Upload
+UPLOAD_PATH=./uploads
+MAX_FILE_SIZE=10485760
+
+# Rate Limiting
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
+RATE_LIMIT_REQUESTS_PER_HOUR=1000
+
+# HIPAA Compliance
+DATA_RETENTION_DAYS=2190
+AUDIT_LOG_RETENTION_DAYS=2555
+
+# Feature Flags
+ENABLE_TWO_FACTOR_AUTH=true
+ENABLE_REAL_TIME_CHAT=true
+ENABLE_EMR_INTEGRATIONS=false
+ENABLE_ADVANCED_ANALYTICS=true
+EOF
+        log_success "Environment file created at .env"
+        log_warning "Please update .env with your API keys and configuration"
+    else
+        log_info "Environment file already exists"
+    fi
+}
+
+# Setup Docker
+setup_docker() {
+    if command_exists docker; then
+        log_info "Setting up Docker configuration..."
+        
+        # Create docker-compose.yml if it doesn't exist
+        if [ ! -f docker-compose.yml ]; then
+            log_info "Docker Compose configuration already provided in artifacts"
+        fi
+        
+        log_success "Docker setup complete"
+        log_info "Run 'docker-compose up -d' to start services"
+    else
+        log_warning "Docker not available, skipping Docker setup"
+    fi
+}
+
+# Initialize Git repository
+init_git() {
+    if [ ! -d .git ]; then
+        log_info "Initializing Git repository..."
+        git init
+        
+        # Create .gitignore
+        cat > .gitignore << 'EOF'
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+backend/venv/
+backend/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.coverage
+htmlcov/
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads and data
+uploads/
+data/
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+EOF
+        
+        git add .
+        git commit -m "Initial commit: AI Agent Builder setup"
+        
+        log_success "Git repository initialized"
+    else
+        log_info "Git repository already exists"
+    fi
+}
+
+# Main setup function
+main() {
+    echo "🤖 AI Agent Builder - Complete Setup"
+    echo "===================================="
+    echo
+    
+    check_requirements
+    create_structure
+    setup_backend
+    setup_frontend
+    create_env_file
+    setup_docker
+    init_git
+    
+    echo
+    log_success "🎉 Setup complete!"
+    echo
+    echo "Next steps:"
+    echo "1. Update .env file with your API keys"
+    echo "2. Start services:"
+    echo "   • Docker: docker-compose up -d"
+    echo "   • Manual: See README.md for manual startup"
+    echo "3. Access the application:"
+    echo "   • Frontend: http://localhost:3000"
+    echo "   • Backend API: http://localhost:8000"
+    echo "   • API Docs: http://localhost:8000/docs"
+    echo
+    echo "For more information, see the README.md file"
+}
+
+# Run main function
+main "$@"
+```
+
+## 🔧 Quick Setup Commands
+
+After running the setup script, use these commands:
+
+### Development with Docker (Recommended)
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+### Manual Development
+```bash
+# Backend
+cd backend
+source venv/bin/activate
+uvicorn main:app --reload
+
+# Frontend (new terminal)
+cd frontend
+npm start
+
+# Database (new terminal)
+docker run --name postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
+```
+
+### Production Deployment
+```bash
+# Build and deploy
+docker-compose -f docker-compose.prod.yml up -d
+
+# Or use Kubernetes
+kubectl apply -f k8s/
+```
+
+## 📝 Configuration Checklist
+
+- [ ] Update `.env` with your API keys
+- [ ] Configure database connection
+- [ ] Set up email service (optional)
+- [ ] Configure LLM provider (OpenAI/Ollama)
+- [ ] Set up vector database (Pinecone/FAISS)
+- [ ] Review security settings
+- [ ] Configure EMR integrations (optional)
+- [ ] Set up monitoring (optional)
+- [ ] Configure SSL certificates for production
+- [ ] Review HIPAA compliance settings
+
+## 🏗️ Architecture Overview
+
+The application follows a modern microservices architecture:
+
+1. **Frontend (React + Tailwind)**: Progressive Web App with offline support
+2. **Backend (FastAPI + Python)**: RESTful API with WebSocket support
+3. **Database (PostgreSQL)**: Primary data storage with audit logging
+4. **Cache (Redis)**: Session management and rate limiting
+5. **Vector DB (Pinecone/FAISS)**: Knowledge base search and retrieval
+6. **LLM Service**: OpenAI API or local Ollama integration
+7. **Reverse Proxy (Nginx)**: Load balancing and SSL termination
+
+## 🔐 Security Features
+
+- **Authentication**: JWT tokens with refresh mechanism
+- **Authorization**: Role-based access control (RBAC)
+- **Two-Factor Auth**: TOTP support with backup codes
+- **Data Encryption**: AES-256 encryption for sensitive data
+- **Audit Logging**: Comprehensive activity tracking
+- **Rate Limiting**: Protection against abuse
+- **HIPAA Compliance**: Built-in PHI protection
+- **Security Headers**: XSS, CSRF, and clickjacking protection
+
+## 📊 Monitoring & Observability
+
+- **Health Checks**: Automated service monitoring
+- **Metrics**: Prometheus integration
+- **Logging**: Structured logging with rotation
+- **Dashboards**: Grafana visualization
+- **Alerts**: Automated alert notifications
+- **Performance**: Real-time performance monitoring
+
+This complete setup provides everything needed to run a production-ready AI Agent Builder for medical practices! 🚀

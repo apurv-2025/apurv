@@ -1,0 +1,575 @@
+# Performance Optimization & Advanced Caching
+
+# services/cache_service_advanced.py - Advanced Caching Strategies
+import redis
+import json
+import hashlib
+import asyncio
+from typing import Any, Optional, Union, Dict, List, Callable
+from datetime import timedelta
+from functools import wraps
+import pickle
+import gzip
+import time
+from concurrent.futures import ThreadPoolExecutor
+
+class AdvancedCacheService:
+    """Advanced caching service with multiple strategies and optimization"""
+    
+    def __init__(self, redis_url: str = "redis://localhost:6379"):
+        self.redis_client = redis.from_url(redis_url, decode_responses=False)
+        self.redis_text_client = redis.from_url(redis_url, decode_responses=True)
+        self.default_ttl = 300  # 5 minutes
+        self.compression_threshold = 1024  # Compress data larger than 1KB
+        self.executor = ThreadPoolExecutor(max_workers=4)
+        
+        # Cache hit/miss statistics
+        self.stats = {
+            'hits': 0,
+            'misses': 0,
+            'sets': 0,
+            'deletes': 0
+        }
+    
+    def _generate_key(self, prefix: str, *args, **kwargs) -> str:
+        """Generate cache key with consistent hashing"""
+        key_data = f"{prefix}:{str(args)}:{str(sorted(kwargs.items()))}"
+        return f"cache:{hashlib.sha256(key_data.encode()).hexdigest()[:16]}"
+    
+    def _compress_data(self, data: bytes) -> bytes:
+        """Compress data if it exceeds threshold"""
+        if len(data) > self.compression_threshold:
+            return b'COMPRESSED:' + gzip.compress(data)
+        return data
+    
+    def _decompress_data(self, data: bytes) -> bytes:
+        """Decompress data if it was compressed"""
+        if data.startswith(b'COMPRESSED:'):
+            return gzip.decompress(data[11:])
+        return data
+    
+    async def get(self, key: str, deserializer: Callable = json.loads) -> Optional[Any]:
+        """Get value from cache with optional custom deserializer"""
+        try:
+            data = self.redis_client.get(key)
+            if data:
+                self.stats['hits'] += 1
+                data = self._decompress_data(data)
+                
+                # Try JSON first, fallback to pickle
+                try:
+                    return deserializer(data.decode('utf-8'))
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    return pickle.loads(data)
+            else:
+                self.stats['misses'] += 1
+                return None
+                
+        except Exception as e:
+            logger.error(f"Cache get error: {e}")
+            self.stats['misses'] += 1
+            return None
+    
+    async def set(
+        self, 
+        key: str, 
+        value: Any, 
+        ttl: Optional[int] = None,
+        serializer: Callable = json.dumps
+    ) -> bool:
+        """Set value in cache with compression and custom serializer"""
+        try:
+            ttl = ttl or self.default_ttl
+            
+            # Try JSON serialization first, fallback to pickle
+            try:
+                serialized_data = serializer(value, default=str).encode('utf-8')
+            except (TypeError, AttributeError):
+                serialized_data = pickle.dumps(value)
+            
+            # Compress if necessary
+            compressed_data = self._compress_data(serialized_data)
+            
+            result = self.redis_client.setex(key, ttl, compressed_data)
+            if result:
+                self.stats['sets'] += 1
+            return result
+            
+        except Exception as e:
+            logger.error(f"Cache set error: {e}")
+            return False
+    
+    async def get_or_set(
+        self, 
+        key: str, 
+        callable_func: Callable, 
+        ttl: Optional[int] = None,
+        *args, 
+        **kwargs
+    ) -> Any:
+        """Get from cache or execute function and cache result"""
+        
+        # Try to get from cache first
+        cached_value = await self.get(key)
+        if cached_value is not None:
+            return cached_value
+        
+        # Execute function and cache result
+        try:
+            if asyncio.iscoroutinefunction(callable_func):
+                result = await callable_func(*args, **kwargs)
+            else:
+                # Run CPU-intensive tasks in thread pool
+                result = await asyncio.get_event_loop().run_in_executor(
+                    self.executor, callable_func, *args
+                )
+            
+            await self.set(key, result, ttl)
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in get_or_set: {e}")
+            return None
+    
+    async def mget(self, keys: List[str]) -> Dict[str, Any]:
+        """Get multiple keys at once"""
+        try:
+            values = self.redis_client.mget(keys)
+            result = {}
+            
+            for key, value in zip(keys, values):
+                if value:
+                    try:
+                        value = self._decompress_data(value)
+                        result[key] = json.loads(value.decode('utf-8'))
+                        self.stats['hits'] += 1
+                    except:
+                        result[key] = pickle.loads(value)
+                        self.stats['hits'] += 1
+                else:
+                    self.stats['misses'] += 1
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Cache mget error: {e}")
+            return {}
+    
+    async def mset(self, mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+        """Set multiple key-value pairs"""
+        try:
+            ttl = ttl or self.default_ttl
+            pipeline = self.redis_client.pipeline()
+            
+            for key, value in mapping.items():
+                try:
+                    serialized_data = json.dumps(value, default=str).encode('utf-8')
+                except (TypeError, AttributeError):
+                    serialized_data = pickle.dumps(value)
+                
+                compressed_data = self._compress_data(serialized_data)
+                pipeline.setex(key, ttl, compressed_data)
+            
+            results = pipeline.execute()
+            self.stats['sets'] += len(mapping)
+            return all(results)
+            
+        except Exception as e:
+            logger.error(f"Cache mset error: {e}")
+            return False
+    
+    async def invalidate_pattern(self, pattern: str) -> int:
+        """Invalidate all keys matching pattern"""
+        try:
+            keys = self.redis_text_client.keys(pattern)
+            if keys:
+                deleted = self.redis_client.delete(*keys)
+                self.stats['deletes'] += deleted
+                return deleted
+            return 0
+        except Exception as e:
+            logger.error(f"Cache invalidate error: {e}")
+            return 0
+    
+    async def get_stats(self) -> Dict[str, Any]:
+        """Get cache statistics"""
+        total_requests = self.stats['hits'] + self.stats['misses']
+        hit_rate = (self.stats['hits'] / total_requests * 100) if total_requests > 0 else 0
+        
+        # Get Redis info
+        redis_info = self.redis_text_client.info()
+        
+        return {
+            "cache_stats": self.stats,
+            "hit_rate_percent": round(hit_rate, 2),
+            "redis_memory_used": redis_info.get('used_memory_human'),
+            "redis_connected_clients": redis_info.get('connected_clients'),
+            "redis_total_commands": redis_info.get('total_commands_processed')
+        }
+
+# Caching decorators with different strategies
+def cache_with_tags(ttl: int = 300, tags: List[str] = None):
+    """Cache decorator with tag-based invalidation"""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            cache_service = AdvancedCacheService()
+            
+            # Generate cache key
+            cache_key = cache_service._generate_key(func.__name__, *args, **kwargs)
+            
+            # Try to get from cache
+            result = await cache_service.get(cache_key)
+            if result is not None:
+                return result
+            
+            # Execute function
+            if asyncio.iscoroutinefunction(func):
+                result = await func(*args, **kwargs)
+            else:
+                result = func(*args, **kwargs)
+            
+            # Cache result
+            await cache_service.set(cache_key, result, ttl)
+            
+            # Store tags for invalidation
+            if tags:
+                for tag in tags:
+                    tag_key = f"tag:{tag}"
+                    cache_service.redis_text_client.sadd(tag_key, cache_key)
+                    cache_service.redis_text_client.expire(tag_key, ttl + 3600)
+            
+            return result
+        return wrapper
+    return decorator
+
+def cache_per_user(ttl: int = 300):
+    """Cache decorator that creates separate cache per user"""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Extract user_id from kwargs or context
+            user_id = kwargs.get('user_id') or getattr(kwargs.get('current_user'), 'id', 'anonymous')
+            
+            cache_service = AdvancedCacheService()
+            cache_key = cache_service._generate_key(f"user:{user_id}:{func.__name__}", *args, **kwargs)
+            
+            return await cache_service.get_or_set(cache_key, func, ttl, *args, **kwargs)
+        return wrapper
+    return decorator
+
+# services/query_optimizer.py - Database Query Optimization
+from sqlalchemy import text, func
+from sqlalchemy.orm import Session, joinedload, selectinload
+from typing import List, Dict, Any, Optional
+
+class QueryOptimizer:
+    """Database query optimization service"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def analyze_query_performance(self, query_text: str) -> Dict[str, Any]:
+        """Analyze query performance using EXPLAIN"""
+        try:
+            explain_query = text(f"EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) {query_text}")
+            result = self.db.execute(explain_query).fetchone()
+            
+            if result:
+                plan = result[0][0]  # First element of JSON result
+                
+                return {
+                    "execution_time_ms": plan.get("Execution Time", 0),
+                    "planning_time_ms": plan.get("Planning Time", 0),
+                    "total_cost": plan.get("Plan", {}).get("Total Cost", 0),
+                    "rows_returned": plan.get("Plan", {}).get("Actual Rows", 0),
+                    "plan": plan
+                }
+        except Exception as e:
+            logger.error(f"Query analysis error: {e}")
+            return {"error": str(e)}
+    
+    def get_slow_queries(self, min_duration_ms: int = 1000) -> List[Dict[str, Any]]:
+        """Get slow queries from pg_stat_statements"""
+        try:
+            query = text("""
+                SELECT 
+                    query,
+                    calls,
+                    total_time,
+                    mean_time,
+                    max_time,
+                    rows
+                FROM pg_stat_statements 
+                WHERE mean_time > :min_duration
+                ORDER BY mean_time DESC 
+                LIMIT 10
+            """)
+            
+            result = self.db.execute(query, {"min_duration": min_duration_ms}).fetchall()
+            
+            return [
+                {
+                    "query": row.query,
+                    "calls": row.calls,
+                    "total_time_ms": row.total_time,
+                    "mean_time_ms": row.mean_time,
+                    "max_time_ms": row.max_time,
+                    "avg_rows": row.rows / row.calls if row.calls > 0 else 0
+                }
+                for row in result
+            ]
+        except Exception as e:
+            logger.error(f"Error getting slow queries: {e}")
+            return []
+    
+    def suggest_indexes(self) -> List[Dict[str, Any]]:
+        """Suggest missing indexes based on query patterns"""
+        suggestions = []
+        
+        # Check for missing indexes on foreign keys
+        missing_fk_indexes = text("""
+            SELECT 
+                schemaname,
+                tablename,
+                attname,
+                n_distinct,
+                correlation
+            FROM pg_stats 
+            WHERE schemaname = 'public'
+            AND attname LIKE '%_id'
+            AND n_distinct > 100
+        """)
+        
+        try:
+            result = self.db.execute(missing_fk_indexes).fetchall()
+            
+            for row in result:
+                suggestions.append({
+                    "type": "foreign_key_index",
+                    "table": row.tablename,
+                    "column": row.attname,
+                    "suggestion": f"CREATE INDEX idx_{row.tablename}_{row.attname} ON {row.tablename} ({row.attname});",
+                    "reason": f"High cardinality foreign key ({row.n_distinct} distinct values)"
+                })
+        except Exception as e:
+            logger.error(f"Error suggesting indexes: {e}")
+        
+        return suggestions
+
+# services/performance_monitor.py - Real-time Performance Monitoring
+import psutil
+import time
+from typing import Dict, Any
+from datetime import datetime
+
+class PerformanceMonitor:
+    """Real-time application performance monitoring"""
+    
+    def __init__(self):
+        self.start_time = time.time()
+        self.request_count = 0
+        self.response_times = []
+    
+    def record_request(self, response_time: float):
+        """Record request metrics"""
+        self.request_count += 1
+        self.response_times.append(response_time)
+        
+        # Keep only last 1000 response times
+        if len(self.response_times) > 1000:
+            self.response_times = self.response_times[-1000:]
+    
+    def get_system_metrics(self) -> Dict[str, Any]:
+        """Get current system metrics"""
+        cpu_percent = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        return {
+            "timestamp": datetime.utcnow().isoformat(),
+            "cpu": {
+                "percent": cpu_percent,
+                "count": psutil.cpu_count()
+            },
+            "memory": {
+                "total_gb": round(memory.total / (1024**3), 2),
+                "available_gb": round(memory.available / (1024**3), 2),
+                "used_percent": memory.percent
+            },
+            "disk": {
+                "total_gb": round(disk.total / (1024**3), 2),
+                "free_gb": round(disk.free / (1024**3), 2),
+                "used_percent": round(disk.used / disk.total * 100, 2)
+            },
+            "load_average": list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else [0, 0, 0]
+        }
+    
+    def get_application_metrics(self) -> Dict[str, Any]:
+        """Get application-specific metrics"""
+        uptime = time.time() - self.start_time
+        
+        # Calculate response time statistics
+        if self.response_times:
+            avg_response_time = sum(self.response_times) / len(self.response_times)
+            max_response_time = max(self.response_times)
+            min_response_time = min(self.response_times)
+            
+            # Calculate percentiles
+            sorted_times = sorted(self.response_times)
+            p95_index = int(len(sorted_times) * 0.95)
+            p99_index = int(len(sorted_times) * 0.99)
+            
+            p95_response_time = sorted_times[p95_index] if p95_index < len(sorted_times) else 0
+            p99_response_time = sorted_times[p99_index] if p99_index < len(sorted_times) else 0
+        else:
+            avg_response_time = max_response_time = min_response_time = 0
+            p95_response_time = p99_response_time = 0
+        
+        requests_per_second = self.request_count / uptime if uptime > 0 else 0
+        
+        return {
+            "uptime_seconds": round(uptime, 2),
+            "total_requests": self.request_count,
+            "requests_per_second": round(requests_per_second, 2),
+            "response_times": {
+                "avg_ms": round(avg_response_time * 1000, 2),
+                "min_ms": round(min_response_time * 1000, 2),
+                "max_ms": round(max_response_time * 1000, 2),
+                "p95_ms": round(p95_response_time * 1000, 2),
+                "p99_ms": round(p99_response_time * 1000, 2)
+            }
+        }
+
+# middleware/performance_middleware.py - Performance Tracking Middleware
+from fastapi import Request, Response
+from fastapi.middleware.base import BaseHTTPMiddleware
+import time
+import asyncio
+from services.performance_monitor import PerformanceMonitor
+
+# Global performance monitor instance
+performance_monitor = PerformanceMonitor()
+
+class PerformanceMiddleware(BaseHTTPMiddleware):
+    """Middleware to track performance metrics"""
+    
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        
+        # Track memory usage before request
+        import tracemalloc
+        tracemalloc.start()
+        
+        response = await call_next(request)
+        
+        # Calculate metrics
+        process_time = time.time() - start_time
+        
+        # Get memory usage
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        
+        # Record metrics
+        performance_monitor.record_request(process_time)
+        
+        # Add headers
+        response.headers["X-Process-Time"] = str(process_time)
+        response.headers["X-Memory-Current"] = str(current)
+        response.headers["X-Memory-Peak"] = str(peak)
+        
+        # Log slow requests
+        if process_time > 2.0:
+            logger.warning(
+                f"Slow request: {request.method} {request.url.path} "
+                f"took {process_time:.3f}s, memory: {current/1024/1024:.2f}MB"
+            )
+        
+        return response
+
+# services/connection_pool_manager.py - Database Connection Pool Optimization
+from sqlalchemy import create_engine
+from sqlalchemy.pool import QueuePool
+import os
+
+class ConnectionPoolManager:
+    """Optimized database connection pool management"""
+    
+    @staticmethod
+    def create_optimized_engine(database_url: str):
+        """Create optimized SQLAlchemy engine"""
+        
+        # Connection pool settings
+        pool_size = int(os.getenv("DB_POOL_SIZE", "20"))
+        max_overflow = int(os.getenv("DB_MAX_OVERFLOW", "30"))
+        pool_timeout = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+        pool_recycle = int(os.getenv("DB_POOL_RECYCLE", "3600"))  # 1 hour
+        
+        engine = create_engine(
+            database_url,
+            poolclass=QueuePool,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+            pool_timeout=pool_timeout,
+            pool_recycle=pool_recycle,
+            pool_pre_ping=True,  # Validate connections before use
+            echo=False,  # Set to True for SQL debugging
+            connect_args={
+                "options": "-c timezone=utc",
+                "application_name": "ai_agent_builder",
+                "connect_timeout": 10
+            }
+        )
+        
+        return engine
+
+# API routes for performance monitoring
+from fastapi import APIRouter, Depends
+
+performance_router = APIRouter()
+
+@performance_router.get("/performance/system")
+async def get_system_metrics():
+    """Get current system performance metrics"""
+    return performance_monitor.get_system_metrics()
+
+@performance_router.get("/performance/application")
+async def get_application_metrics():
+    """Get application performance metrics"""
+    return performance_monitor.get_application_metrics()
+
+@performance_router.get("/performance/cache")
+async def get_cache_stats():
+    """Get cache performance statistics"""
+    cache_service = AdvancedCacheService()
+    return await cache_service.get_stats()
+
+@performance_router.get("/performance/database")
+async def get_database_performance(db: Session = Depends(get_db)):
+    """Get database performance metrics"""
+    optimizer = QueryOptimizer(db)
+    
+    return {
+        "slow_queries": optimizer.get_slow_queries(),
+        "index_suggestions": optimizer.suggest_indexes(),
+        "connection_pool": {
+            "size": db.bind.pool.size(),
+            "checked_in": db.bind.pool.checkedin(),
+            "checked_out": db.bind.pool.checkedout(),
+            "overflow": db.bind.pool.overflow(),
+            "invalid": db.bind.pool.invalid()
+        }
+    }
+
+@performance_router.post("/performance/analyze_query")
+async def analyze_query(query: str, db: Session = Depends(get_db)):
+    """Analyze specific query performance"""
+    optimizer = QueryOptimizer(db)
+    return optimizer.analyze_query_performance(query)
+
+# Add performance router to main app
+from main import app
+app.include_router(performance_router, prefix="/api/performance", tags=["performance"])
+
+# Add performance middleware
+app.add_middleware(PerformanceMiddleware)

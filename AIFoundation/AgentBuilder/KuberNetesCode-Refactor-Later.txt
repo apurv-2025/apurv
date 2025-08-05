@@ -1,0 +1,956 @@
+# Production Kubernetes Manifests & Advanced Mobile PWA
+
+# k8s/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-agent-builder
+  labels:
+    name: ai-agent-builder
+    environment: production
+
+---
+
+# k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-agent-builder-config
+  namespace: ai-agent-builder
+data:
+  ENVIRONMENT: "production"
+  FRONTEND_URL: "https://app.aiagentbuilder.com"
+  BACKEND_URL: "https://api.aiagentbuilder.com"
+  LLM_PROVIDER: "openai"
+  VECTOR_PROVIDER: "pinecone"
+  RATE_LIMIT_REQUESTS_PER_MINUTE: "60"
+  RATE_LIMIT_REQUESTS_PER_HOUR: "1000"
+  DATA_RETENTION_DAYS: "2190"
+  AUDIT_LOG_RETENTION_DAYS: "2555"
+
+---
+
+# k8s/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ai-agent-builder-secrets
+  namespace: ai-agent-builder
+type: Opaque
+data:
+  # Base64 encoded secrets - replace with actual values
+  DATABASE_URL: cG9zdGdyZXNxbDovL3VzZXI6cGFzc3dvcmRAcG9zdGdyZXM6NTQzMi9haV9hZ2VudHNfZGI=
+  SECRET_KEY: eW91ci1zdXBlci1zZWNyZXQta2V5LWNoYW5nZS1pbi1wcm9kdWN0aW9u
+  OPENAI_API_KEY: c2steW91ci1vcGVuYWktYXBpLWtleS1oZXJl
+  PINECONE_API_KEY: eW91ci1waW5lY29uZS1hcGkta2V5
+  REDIS_URL: cmVkaXM6Ly86cGFzc3dvcmRAbG9jYWxob3N0OjYzNzk=
+
+---
+
+# k8s/postgres-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: ai-agent-builder
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+
+# k8s/redis-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: ai-agent-builder
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+
+# k8s/postgres.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: ai-agent-builder
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: ai_agents_db
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-builder-secrets
+              key: POSTGRES_PASSWORD
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: ai-agent-builder
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+
+# k8s/redis.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: ai-agent-builder
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        command:
+        - redis-server
+        - --appendonly
+        - "yes"
+        - --requirepass
+        - "$(REDIS_PASSWORD)"
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-builder-secrets
+              key: REDIS_PASSWORD
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: redis-pvc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: ai-agent-builder
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+
+# k8s/backend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ai-agent-builder
+  labels:
+    app: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: your-registry/ai-agent-builder-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-builder-secrets
+              key: DATABASE_URL
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-builder-secrets
+              key: SECRET_KEY
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-builder-secrets
+              key: OPENAI_API_KEY
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-builder-secrets
+              key: REDIS_URL
+        envFrom:
+        - configMapRef:
+            name: ai-agent-builder-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      initContainers:
+      - name: migrate
+        image: your-registry/ai-agent-builder-backend:latest
+        command: ['alembic', 'upgrade', 'head']
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-builder-secrets
+              key: DATABASE_URL
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: ai-agent-builder
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP
+
+---
+
+# k8s/frontend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: ai-agent-builder
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: your-registry/ai-agent-builder-frontend:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ai-agent-builder-config
+              key: BACKEND_URL
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: ai-agent-builder
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+
+---
+
+# k8s/hpa.yaml - Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: ai-agent-builder
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: ai-agent-builder
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+
+---
+
+# k8s/ingress.yaml - Ingress with SSL
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-agent-builder-ingress
+  namespace: ai-agent-builder
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.aiagentbuilder.com"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  tls:
+  - hosts:
+    - app.aiagentbuilder.com
+    - api.aiagentbuilder.com
+    secretName: ai-agent-builder-tls
+  rules:
+  - host: app.aiagentbuilder.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+  - host: api.aiagentbuilder.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8000
+
+---
+
+# k8s/networkpolicy.yaml - Network Security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ai-agent-builder-network-policy
+  namespace: ai-agent-builder
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+  egress:
+  - {}  # Allow all egress traffic
+
+---
+
+# k8s/monitoring.yaml - Monitoring setup
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: ai-agent-builder-metrics
+  namespace: ai-agent-builder
+  labels:
+    app: ai-agent-builder
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+
+---
+
+# Advanced Mobile PWA Features
+
+# frontend/public/sw.js - Enhanced Service Worker
+const CACHE_NAME = 'ai-agent-builder-v2';
+const STATIC_CACHE_NAME = 'ai-agent-builder-static-v2';
+const DYNAMIC_CACHE_NAME = 'ai-agent-builder-dynamic-v2';
+
+const STATIC_FILES = [
+  '/',
+  '/static/js/bundle.js',
+  '/static/css/main.css',
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
+];
+
+const API_CACHE_STRATEGIES = {
+  '/api/agents/': 'stale-while-revalidate',
+  '/api/knowledge/': 'network-first',
+  '/api/chat/': 'network-only',
+  '/api/auth/': 'network-only'
+};
+
+// Install event - cache static assets
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    Promise.all([
+      caches.open(STATIC_CACHE_NAME).then((cache) => {
+        return cache.addAll(STATIC_FILES);
+      }),
+      self.skipWaiting()
+    ])
+  );
+});
+
+// Activate event - cleanup old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    Promise.all([
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== STATIC_CACHE_NAME && 
+                cacheName !== DYNAMIC_CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      self.clients.claim()
+    ])
+  );
+});
+
+// Fetch event - implement caching strategies
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Handle API requests with specific strategies
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(handleApiRequest(request));
+    return;
+  }
+
+  // Handle static assets
+  if (STATIC_FILES.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((response) => {
+        return response || fetch(request);
+      })
+    );
+    return;
+  }
+
+  // Handle other requests with stale-while-revalidate
+  event.respondWith(
+    caches.match(request).then((response) => {
+      const fetchPromise = fetch(request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
+        return networkResponse;
+      });
+
+      return response || fetchPromise;
+    })
+  );
+});
+
+// Handle API requests with different strategies
+async function handleApiRequest(request) {
+  const url = new URL(request.url);
+  let strategy = 'network-first';
+
+  // Determine strategy based on endpoint
+  for (const [pattern, strategyName] of Object.entries(API_CACHE_STRATEGIES)) {
+    if (url.pathname.startsWith(pattern)) {
+      strategy = strategyName;
+      break;
+    }
+  }
+
+  switch (strategy) {
+    case 'network-only':
+      return fetch(request);
+
+    case 'cache-first':
+      return cacheFirst(request);
+
+    case 'network-first':
+      return networkFirst(request);
+
+    case 'stale-while-revalidate':
+      return staleWhileRevalidate(request);
+
+    default:
+      return fetch(request);
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    return cached || new Response('Offline', { status: 503 });
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cached = await caches.match(request);
+  
+  const fetchPromise = fetch(request).then((response) => {
+    if (response && response.status === 200) {
+      const cache = caches.open(DYNAMIC_CACHE_NAME);
+      cache.then((c) => c.put(request, response.clone()));
+    }
+    return response;
+  });
+
+  return cached || fetchPromise;
+}
+
+// Background sync for offline actions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync') {
+    event.waitUntil(syncOfflineActions());
+  }
+});
+
+async function syncOfflineActions() {
+  try {
+    const actions = await getOfflineActions();
+    
+    for (const action of actions) {
+      try {
+        await fetch('/api/sync-offline-actions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(action)
+        });
+        
+        // Remove synced action
+        await removeOfflineAction(action.id);
+      } catch (error) {
+        console.log('Failed to sync action:', action.id);
+      }
+    }
+  } catch (error) {
+    console.log('Background sync failed:', error);
+  }
+}
+
+// Push notifications
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+  
+  const options = {
+    body: data.body || 'New notification from AI Agent Builder',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/badge-72x72.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || '/',
+      timestamp: Date.now()
+    },
+    actions: [
+      {
+        action: 'view',
+        title: 'View',
+        icon: '/icons/view-icon.png'
+      },
+      {
+        action: 'dismiss',
+        title: 'Dismiss',
+        icon: '/icons/dismiss-icon.png'
+      }
+    ],
+    requireInteraction: data.priority === 'high'
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(
+      data.title || 'AI Agent Builder',
+      options
+    )
+  );
+});
+
+// Notification click handling
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'view') {
+    const url = event.notification.data.url || '/';
+    event.waitUntil(
+      clients.openWindow(url)
+    );
+  }
+});
+
+// Helper functions for offline storage
+async function getOfflineActions() {
+  return new Promise((resolve) => {
+    const actions = JSON.parse(localStorage.getItem('offlineActions') || '[]');
+    resolve(actions);
+  });
+}
+
+async function removeOfflineAction(actionId) {
+  return new Promise((resolve) => {
+    const actions = JSON.parse(localStorage.getItem('offlineActions') || '[]');
+    const filtered = actions.filter(action => action.id !== actionId);
+    localStorage.setItem('offlineActions', JSON.stringify(filtered));
+    resolve();
+  });
+}
+
+# frontend/src/hooks/useOfflineStorage.js - Offline data management
+"""
+import { useState, useEffect } from 'react';
+
+export const useOfflineStorage = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingActions, setPendingActions] = useState([]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncPendingActions();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Load pending actions from localStorage
+    loadPendingActions();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const loadPendingActions = () => {
+    try {
+      const stored = localStorage.getItem('offlineActions');
+      if (stored) {
+        setPendingActions(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load pending actions:', error);
+    }
+  };
+
+  const addOfflineAction = (action) => {
+    const newAction = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      ...action
+    };
+
+    const updated = [...pendingActions, newAction];
+    setPendingActions(updated);
+    localStorage.setItem('offlineActions', JSON.stringify(updated));
+
+    // Register for background sync if available
+    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.sync.register('background-sync');
+      });
+    }
+  };
+
+  const syncPendingActions = async () => {
+    if (!isOnline || pendingActions.length === 0) return;
+
+    const successful = [];
+    
+    for (const action of pendingActions) {
+      try {
+        const response = await fetch('/api/sync-offline-actions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(action)
+        });
+
+        if (response.ok) {
+          successful.push(action.id);
+        }
+      } catch (error) {
+        console.error('Failed to sync action:', action.id, error);
+      }
+    }
+
+    if (successful.length > 0) {
+      const remaining = pendingActions.filter(action => !successful.includes(action.id));
+      setPendingActions(remaining);
+      localStorage.setItem('offlineActions', JSON.stringify(remaining));
+    }
+  };
+
+  return {
+    isOnline,
+    pendingActions,
+    addOfflineAction,
+    syncPendingActions
+  };
+};
+"""
+
+# frontend/src/components/OfflineIndicator.jsx - Offline status indicator
+"""
+import React from 'react';
+import { Wifi, WifiOff, Upload } from 'lucide-react';
+import { useOfflineStorage } from '../hooks/useOfflineStorage';
+
+const OfflineIndicator = () => {
+  const { isOnline, pendingActions } = useOfflineStorage();
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 flex items-center space-x-2 px-3 py-2 rounded-lg shadow-lg transition-all duration-300 ${
+      isOnline ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+    }`}>
+      {isOnline ? (
+        <>
+          <Wifi className="w-4 h-4" />
+          <span className="text-sm font-medium">Online</span>
+        </>
+      ) : (
+        <>
+          <WifiOff className="w-4 h-4" />
+          <span className="text-sm font-medium">Offline</span>
+        </>
+      )}
+      
+      {pendingActions.length > 0 && (
+        <div className="flex items-center space-x-1 ml-2 pl-2 border-l border-current">
+          <Upload className="w-3 h-3" />
+          <span className="text-xs">{pendingActions.length}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OfflineIndicator;
+"""

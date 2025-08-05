@@ -1,0 +1,649 @@
+# Missing Backend Components - Complete Implementation
+
+# alembic/env.py - Database migration configuration
+from logging.config import fileConfig
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
+from alembic import context
+import os
+import sys
+
+# Add the backend directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from models.database import Base
+from models.user import User
+from models.agent import Agent, KnowledgeBase, AgentInteraction
+
+# this is the Alembic Config object
+config = context.config
+
+# Set the database URL from environment
+database_url = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/ai_agents_db")
+config.set_main_option("sqlalchemy.url", database_url)
+
+# Interpret the config file for Python logging
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# Set target metadata for autogenerate support
+target_metadata = Base.metadata
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode."""
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection, 
+            target_metadata=target_metadata
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+
+# models/base.py - Base model with common fields
+from sqlalchemy import Column, Integer, DateTime, Boolean
+from sqlalchemy.sql import func
+from models.database import Base
+
+class BaseModel(Base):
+    __abstract__ = True
+    
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    is_active = Column(Boolean, default=True)
+
+# utils/validators.py - Input validation utilities
+import re
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, validator, EmailStr
+from datetime import datetime
+
+class AgentCreateValidator(BaseModel):
+    name: str
+    description: str
+    role: str
+    persona: str
+    instructions: str
+    configuration: Optional[Dict[str, Any]] = {}
+    
+    @validator('name')
+    def validate_name(cls, v):
+        if not v or len(v.strip()) < 2:
+            raise ValueError('Name must be at least 2 characters')
+        if len(v) > 100:
+            raise ValueError('Name must be less than 100 characters')
+        return v.strip()
+    
+    @validator('role')
+    def validate_role(cls, v):
+        allowed_roles = ['billing', 'front_desk', 'general']
+        if v not in allowed_roles:
+            raise ValueError(f'Role must be one of: {", ".join(allowed_roles)}')
+        return v
+    
+    @validator('instructions')
+    def validate_instructions(cls, v):
+        if len(v) > 2000:
+            raise ValueError('Instructions must be less than 2000 characters')
+        # Check for potential PHI patterns
+        phi_patterns = [
+            r'\b\d{3}-\d{2}-\d{4}\b',  # SSN
+            r'\b\d{3}-\d{3}-\d{4}\b',  # Phone
+        ]
+        for pattern in phi_patterns:
+            if re.search(pattern, v):
+                raise ValueError('Instructions should not contain specific patient information')
+        return v
+
+class UserCreateValidator(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: str
+    practice_name: str
+    role: str = "admin"
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain number')
+        return v
+
+# utils/helpers.py - Utility functions
+import secrets
+import string
+from typing import Dict, Any, Optional
+import hashlib
+import hmac
+from datetime import datetime, timezone
+
+def generate_api_key() -> str:
+    """Generate a secure API key"""
+    return secrets.token_urlsafe(32)
+
+def generate_session_id() -> str:
+    """Generate a unique session ID"""
+    return secrets.token_hex(16)
+
+def safe_dict_get(data: Dict[str, Any], key: str, default: Any = None) -> Any:
+    """Safely get value from dictionary"""
+    try:
+        return data.get(key, default)
+    except (AttributeError, TypeError):
+        return default
+
+def hash_sensitive_data(data: str, salt: str = None) -> str:
+    """Hash sensitive data with salt"""
+    if salt is None:
+        salt = secrets.token_hex(16)
+    
+    return hashlib.pbkdf2_hex(
+        data.encode('utf-8'), 
+        salt.encode('utf-8'), 
+        100000  # iterations
+    )
+
+def verify_webhook_signature(payload: bytes, signature: str, secret: str) -> bool:
+    """Verify webhook signature"""
+    expected_signature = hmac.new(
+        secret.encode('utf-8'),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+    
+    return hmac.compare_digest(signature, expected_signature)
+
+def format_datetime_for_api(dt: datetime) -> str:
+    """Format datetime for API response"""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+# config/settings.py - Application settings
+import os
+from typing import Optional, List
+from pydantic import BaseSettings
+
+class Settings(BaseSettings):
+    # Database
+    database_url: str = "postgresql://postgres:password@localhost:5432/ai_agents_db"
+    
+    # Security
+    secret_key: str = "your-secret-key-change-in-production"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    
+    # LLM Configuration
+    llm_provider: str = "openai"  # openai, ollama, huggingface
+    openai_api_key: Optional[str] = None
+    openai_model: str = "gpt-3.5-turbo"
+    ollama_url: str = "http://localhost:11434"
+    ollama_model: str = "llama2"
+    huggingface_token: Optional[str] = None
+    
+    # Vector Database
+    vector_provider: str = "faiss"  # pinecone, faiss
+    pinecone_api_key: Optional[str] = None
+    pinecone_environment: str = "us-west1-gcp"
+    
+    # Application
+    frontend_url: str = "http://localhost:3000"
+    backend_url: str = "http://localhost:8000"
+    environment: str = "development"
+    debug: bool = True
+    
+    # Email
+    smtp_server: Optional[str] = None
+    smtp_port: int = 587
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    
+    # Redis
+    redis_url: str = "redis://localhost:6379"
+    
+    # File Storage
+    upload_path: str = "./uploads"
+    max_file_size: int = 10 * 1024 * 1024  # 10MB
+    allowed_file_types: List[str] = [".pdf", ".txt", ".doc", ".docx"]
+    
+    # Rate Limiting
+    rate_limit_requests_per_minute: int = 60
+    rate_limit_requests_per_hour: int = 1000
+    
+    # HIPAA Compliance
+    data_retention_days: int = 2190  # 6 years
+    audit_log_retention_days: int = 2555  # 7 years
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+
+settings = Settings()
+
+# middleware/cors.py - Enhanced CORS middleware
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
+
+def setup_cors(app: FastAPI, settings):
+    """Setup CORS middleware"""
+    
+    allowed_origins = [settings.frontend_url]
+    
+    if settings.environment == "development":
+        allowed_origins.extend([
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000"
+        ])
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-Requested-With",
+            "X-API-Key",
+            "X-Tenant-ID"
+        ],
+        expose_headers=[
+            "X-Process-Time",
+            "X-RateLimit-Remaining",
+            "X-RateLimit-Reset"
+        ]
+    )
+
+# services/email_service.py - Email service implementation
+import smtplib
+from email.mime.text import MimeText
+from email.mime.multipart import MimeMultipart
+from email.mime.base import MimeBase
+from email import encoders
+from typing import List, Optional, Dict, Any
+import logging
+from config.settings import settings
+
+logger = logging.getLogger(__name__)
+
+class EmailService:
+    def __init__(self):
+        self.smtp_server = settings.smtp_server
+        self.smtp_port = settings.smtp_port
+        self.smtp_username = settings.smtp_username
+        self.smtp_password = settings.smtp_password
+    
+    async def send_email(
+        self,
+        to_emails: List[str],
+        subject: str,
+        body: str,
+        html_body: Optional[str] = None,
+        attachments: Optional[List[Dict[str, Any]]] = None
+    ) -> bool:
+        """Send email with optional HTML body and attachments"""
+        
+        if not self.smtp_server:
+            logger.warning("SMTP server not configured, skipping email")
+            return False
+        
+        try:
+            # Create message
+            msg = MimeMultipart('alternative')
+            msg['From'] = self.smtp_username
+            msg['To'] = ', '.join(to_emails)
+            msg['Subject'] = subject
+            
+            # Add text body
+            text_part = MimeText(body, 'plain')
+            msg.attach(text_part)
+            
+            # Add HTML body if provided
+            if html_body:
+                html_part = MimeText(html_body, 'html')
+                msg.attach(html_part)
+            
+            # Add attachments if provided
+            if attachments:
+                for attachment in attachments:
+                    self._add_attachment(msg, attachment)
+            
+            # Send email
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.smtp_username, self.smtp_password)
+                server.send_message(msg)
+            
+            logger.info(f"Email sent successfully to {to_emails}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to send email: {e}")
+            return False
+    
+    def _add_attachment(self, msg: MimeMultipart, attachment: Dict[str, Any]):
+        """Add attachment to email message"""
+        try:
+            part = MimeBase('application', 'octet-stream')
+            part.set_payload(attachment['content'])
+            encoders.encode_base64(part)
+            part.add_header(
+                'Content-Disposition',
+                f'attachment; filename= {attachment["filename"]}'
+            )
+            msg.attach(part)
+        except Exception as e:
+            logger.error(f"Failed to add attachment: {e}")
+
+# services/file_service.py - File handling service
+import os
+import uuid
+import shutil
+from pathlib import Path
+from typing import Optional, List, Dict, Any
+from fastapi import UploadFile, HTTPException
+import magic
+from config.settings import settings
+
+class FileService:
+    def __init__(self):
+        self.upload_path = Path(settings.upload_path)
+        self.max_file_size = settings.max_file_size
+        self.allowed_types = settings.allowed_file_types
+        
+        # Create upload directory if it doesn't exist
+        self.upload_path.mkdir(parents=True, exist_ok=True)
+    
+    async def save_uploaded_file(
+        self, 
+        file: UploadFile, 
+        subfolder: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Save uploaded file and return file info"""
+        
+        # Validate file
+        self._validate_file(file)
+        
+        # Generate unique filename
+        file_ext = Path(file.filename).suffix.lower()
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        
+        # Determine save path
+        if subfolder:
+            save_dir = self.upload_path / subfolder
+            save_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            save_dir = self.upload_path
+        
+        file_path = save_dir / unique_filename
+        
+        # Save file
+        try:
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            return {
+                "filename": unique_filename,
+                "original_filename": file.filename,
+                "file_path": str(file_path),
+                "file_size": file_path.stat().st_size,
+                "content_type": file.content_type
+            }
+            
+        except Exception as e:
+            # Clean up on error
+            if file_path.exists():
+                file_path.unlink()
+            raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+    
+    def _validate_file(self, file: UploadFile):
+        """Validate uploaded file"""
+        
+        # Check file size
+        file.file.seek(0, 2)  # Seek to end
+        file_size = file.file.tell()
+        file.file.seek(0)  # Reset to beginning
+        
+        if file_size > self.max_file_size:
+            raise HTTPException(
+                status_code=413, 
+                detail=f"File too large. Maximum size: {self.max_file_size} bytes"
+            )
+        
+        # Check file extension
+        file_ext = Path(file.filename).suffix.lower()
+        if file_ext not in self.allowed_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type not allowed. Allowed types: {', '.join(self.allowed_types)}"
+            )
+    
+    def delete_file(self, file_path: str) -> bool:
+        """Delete a file"""
+        try:
+            path = Path(file_path)
+            if path.exists() and path.is_file():
+                path.unlink()
+                return True
+        except Exception as e:
+            logger.error(f"Failed to delete file {file_path}: {e}")
+        return False
+    
+    def get_file_info(self, file_path: str) -> Optional[Dict[str, Any]]:
+        """Get file information"""
+        try:
+            path = Path(file_path)
+            if path.exists():
+                stat = path.stat()
+                return {
+                    "filename": path.name,
+                    "file_size": stat.st_size,
+                    "created_at": stat.st_ctime,
+                    "modified_at": stat.st_mtime
+                }
+        except Exception as e:
+            logger.error(f"Failed to get file info for {file_path}: {e}")
+        return None
+
+# Complete requirements.txt for the backend
+REQUIREMENTS_TXT = """
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.7
+alembic==1.12.1
+pydantic[email]==2.5.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# LLM and AI
+openai==1.3.5
+langchain==0.0.335
+langchain-openai==0.0.2
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+pinecone-client==2.2.4
+
+# Document processing
+pypdf2==3.0.1
+python-docx==0.8.11
+python-magic==0.4.27
+
+# Real-time features
+redis==5.0.1
+websockets==12.0
+
+# Security
+cryptography==41.0.7
+pyotp==2.9.0
+qrcode[pil]==7.4.2
+
+# HTTP clients
+aiohttp==3.9.1
+requests==2.31.0
+
+# Monitoring and logging
+prometheus-client==0.19.0
+structlog==23.2.0
+
+# Testing (development)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+pytest-cov==4.1.0
+
+# Code quality (development)
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+bandit==1.7.5
+"""
+
+# Create a complete setup script
+SETUP_SCRIPT = """
+#!/bin/bash
+
+echo "🚀 Setting up AI Agent Builder..."
+
+# Check if Python 3.11+ is installed
+python_version=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2)
+required_version="3.11"
+
+if [ "$(printf '%s\n' "$required_version" "$python_version" | sort -V | head -n1)" != "$required_version" ]; then
+    echo "❌ Python 3.11+ is required. Current version: $python_version"
+    exit 1
+fi
+
+# Create backend directory structure
+echo "📁 Creating directory structure..."
+mkdir -p backend/{models,routers,services,utils,config,middleware,tests}
+mkdir -p backend/alembic/versions
+mkdir -p frontend/public/icons
+mkdir -p uploads
+mkdir -p logs
+
+# Create virtual environment
+echo "🐍 Creating Python virtual environment..."
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+
+# Install Python dependencies
+echo "📦 Installing Python dependencies..."
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Create __init__.py files
+touch models/__init__.py
+touch routers/__init__.py
+touch services/__init__.py
+touch utils/__init__.py
+touch config/__init__.py
+touch middleware/__init__.py
+
+# Create .env file if it doesn't exist
+if [ ! -f .env ]; then
+    echo "⚙️ Creating environment file..."
+    cat > .env << 'EOF'
+# Database
+DATABASE_URL=postgresql://postgres:password@localhost:5432/ai_agents_db
+
+# Security
+SECRET_KEY=your-super-secret-key-change-in-production
+ENCRYPTION_KEY=generate-a-secure-encryption-key
+
+# LLM Provider
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-3.5-turbo
+
+# Vector Database
+VECTOR_PROVIDER=faiss
+
+# Application
+ENVIRONMENT=development
+DEBUG=true
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:8000
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# File Upload
+UPLOAD_PATH=./uploads
+MAX_FILE_SIZE=10485760
+
+# Rate Limiting
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
+RATE_LIMIT_REQUESTS_PER_HOUR=1000
+EOF
+    echo "✅ Created .env file - please update with your API keys"
+fi
+
+cd ..
+
+# Setup frontend if Node.js is available
+if command -v node &> /dev/null; then
+    echo "📱 Setting up frontend..."
+    cd frontend
+    
+    if [ ! -f package.json ]; then
+        echo "🎨 Creating React app..."
+        npx create-react-app . --template typescript
+    fi
+    
+    echo "📦 Installing frontend dependencies..."
+    npm install lucide-react recharts
+    npm install -D tailwindcss postcss autoprefixer
+    
+    # Initialize Tailwind if not already done
+    if [ ! -f tailwind.config.js ]; then
+        npx tailwindcss init -p
+    fi
+    
+    cd ..
+fi
+
+echo "✅ Setup complete!"
+echo ""
+echo "Next steps:"
+echo "1. Update backend/.env with your API keys"
+echo "2. Start PostgreSQL: docker-compose up -d postgres"
+echo "3. Run migrations: cd backend && alembic upgrade head"
+echo "4. Start backend: cd backend && source venv/bin/activate && uvicorn main:app --reload"
+echo "5. Start frontend: cd frontend && npm start"
+"""

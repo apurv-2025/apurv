@@ -1,0 +1,735 @@
+# Additional Integrations & Advanced Features
+
+# integrations/cerner_integration.py - Cerner EHR Integration
+import aiohttp
+import json
+from typing import Dict, Any, List, Optional
+from datetime import datetime
+from integrations.base_integration import BaseIntegration, Patient, Appointment
+
+class CernerIntegration(BaseIntegration):
+    """Integration with Cerner PowerChart using FHIR R4"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.client_id = config.get('client_id')
+        self.client_secret = config.get('client_secret')
+        self.tenant_id = config.get('tenant_id')
+        self.fhir_base_url = config.get('fhir_base_url')
+        self.access_token = None
+    
+    async def authenticate(self) -> bool:
+        """Authenticate using Cerner's OAuth2 flow"""
+        try:
+            auth_url = f"https://authorization.cerner.com/tenants/{self.tenant_id}/protocols/oauth2/profiles/smart-v1/token"
+            
+            headers = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            }
+            
+            data = {
+                'grant_type': 'client_credentials',
+                'client_id': self.client_id,
+                'client_secret': self.client_secret,
+                'scope': 'system/Patient.read system/Appointment.read'
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(auth_url, headers=headers, data=data) as response:
+                    if response.status == 200:
+                        token_data = await response.json()
+                        self.access_token = token_data.get('access_token')
+                        return True
+                        
+        except Exception as e:
+            logger.error(f"Cerner authentication failed: {e}")
+        
+        return False
+    
+    async def test_connection(self) -> bool:
+        """Test connection by querying metadata"""
+        if not self.access_token:
+            await self.authenticate()
+        
+        try:
+            headers = {
+                'Authorization': f'Bearer {self.access_token}',
+                'Accept': 'application/fhir+json'
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{self.fhir_base_url}/metadata", headers=headers) as response:
+                    return response.status == 200
+                    
+        except Exception as e:
+            logger.error(f"Cerner connection test failed: {e}")
+            return False
+    
+    async def get_patients(self, limit: int = 100) -> List[Patient]:
+        """Get patients from Cerner FHIR API"""
+        if not self.access_token:
+            await self.authenticate()
+        
+        patients = []
+        
+        try:
+            headers = {
+                'Authorization': f'Bearer {self.access_token}',
+                'Accept': 'application/fhir+json'
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.fhir_base_url}/Patient?_count={limit}",
+                    headers=headers
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        for entry in data.get('entry', []):
+                            resource = entry.get('resource', {})
+                            
+                            # Extract patient data
+                            patient_id = resource.get('id')
+                            name = resource.get('name', [{}])[0]
+                            
+                            patient = Patient(
+                                patient_id=patient_id,
+                                first_name=name.get('given', [''])[0],
+                                last_name=name.get('family', ''),
+                                date_of_birth=datetime.fromisoformat(
+                                    resource.get('birthDate', '1900-01-01')
+                                ),
+                                phone=self._extract_phone(resource.get('telecom', [])),
+                                email=self._extract_email(resource.get('telecom', []))
+                            )
+                            
+                            patients.append(patient)
+                            
+        except Exception as e:
+            logger.error(f"Failed to get Cerner patients: {e}")
+        
+        return patients
+    
+    async def get_appointments(self, date_range: tuple = None) -> List[Appointment]:
+        """Get appointments from Cerner FHIR API"""
+        # Implementation similar to Epic but with Cerner-specific endpoints
+        # Details omitted for brevity
+        pass
+    
+    async def verify_insurance(self, patient_id: str) -> Optional[InsuranceInfo]:
+        """Verify insurance coverage using Cerner Coverage resource"""
+        # Implementation similar to Epic but with Cerner-specific structure
+        pass
+
+# integrations/allscripts_integration.py - Allscripts Integration
+import aiohttp
+import base64
+from typing import Dict, Any, List, Optional
+from integrations.base_integration import BaseIntegration
+
+class AllscriptsIntegration(BaseIntegration):
+    """Integration with Allscripts Developer Program API"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.app_name = config.get('app_name')
+        self.username = config.get('username')
+        self.password = config.get('password')
+        self.app_username = config.get('app_username')
+        self.app_password = config.get('app_password')
+        self.token = None
+    
+    async def authenticate(self) -> bool:
+        """Authenticate using Allscripts Unity API"""
+        try:
+            auth_data = {
+                "Action": "GetToken",
+                "AppUserID": self.app_username,
+                "Appname": self.app_name,
+                "Parameter1": self.username,
+                "Parameter2": self.password,
+                "Parameter3": self.app_password,
+                "Parameter4": "",
+                "Parameter5": "",
+                "Parameter6": ""
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/Unity/UnityService.svc/json/MagicJson",
+                    json=auth_data
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        self.token = result.get('Token')
+                        return self.token is not None
+                        
+        except Exception as e:
+            logger.error(f"Allscripts authentication failed: {e}")
+        
+        return False
+    
+    async def test_connection(self) -> bool:
+        """Test connection using GetProviders call"""
+        if not self.token:
+            await self.authenticate()
+        
+        try:
+            test_data = {
+                "Action": "GetProviders",
+                "AppUserID": self.app_username,
+                "Token": self.token,
+                "Parameter1": "",
+                "Parameter2": "",
+                "Parameter3": "",
+                "Parameter4": "",
+                "Parameter5": "",
+                "Parameter6": ""
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/Unity/UnityService.svc/json/MagicJson",
+                    json=test_data
+                ) as response:
+                    return response.status == 200
+                    
+        except Exception as e:
+            logger.error(f"Allscripts connection test failed: {e}")
+            return False
+
+# integrations/twilio_integration.py - Twilio Communication Integration
+import aiohttp
+import base64
+from typing import Dict, Any, Optional
+from twilio.rest import Client
+
+class TwilioIntegration:
+    """Integration with Twilio for SMS and voice communications"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        self.account_sid = config.get('account_sid')
+        self.auth_token = config.get('auth_token')
+        self.phone_number = config.get('phone_number')
+        self.client = Client(self.account_sid, self.auth_token)
+    
+    async def send_sms(self, to_phone: str, message: str) -> Dict[str, Any]:
+        """Send SMS message"""
+        try:
+            message = self.client.messages.create(
+                body=message,
+                from_=self.phone_number,
+                to=to_phone
+            )
+            
+            return {
+                "success": True,
+                "message_sid": message.sid,
+                "status": message.status
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def make_voice_call(self, to_phone: str, message: str) -> Dict[str, Any]:
+        """Make a voice call with TTS message"""
+        try:
+            call = self.client.calls.create(
+                twiml=f'<Response><Say>{message}</Say></Response>',
+                to=to_phone,
+                from_=self.phone_number
+            )
+            
+            return {
+                "success": True,
+                "call_sid": call.sid,
+                "status": call.status
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def send_appointment_reminder(self, phone: str, appointment_details: Dict[str, Any]) -> Dict[str, Any]:
+        """Send appointment reminder SMS"""
+        message = f"""
+Appointment Reminder:
+Date: {appointment_details.get('date')}
+Time: {appointment_details.get('time')}
+Provider: {appointment_details.get('provider')}
+Location: {appointment_details.get('location')}
+
+Reply CONFIRM to confirm or RESCHEDULE to reschedule.
+        """.strip()
+        
+        return await self.send_sms(phone, message)
+
+# integrations/slack_integration.py - Slack Integration
+import aiohttp
+from typing import Dict, Any, List
+
+class SlackIntegration:
+    """Integration with Slack for team communications"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        self.bot_token = config.get('bot_token')
+        self.signing_secret = config.get('signing_secret')
+        self.base_url = "https://slack.com/api"
+    
+    async def send_message(self, channel: str, message: str, blocks: List[Dict] = None) -> Dict[str, Any]:
+        """Send message to Slack channel"""
+        headers = {
+            'Authorization': f'Bearer {self.bot_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        payload = {
+            'channel': channel,
+            'text': message
+        }
+        
+        if blocks:
+            payload['blocks'] = blocks
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{self.base_url}/chat.postMessage", json=payload, headers=headers) as response:
+                return await response.json()
+    
+    async def send_agent_alert(self, channel: str, agent_name: str, alert_type: str, details: str) -> Dict[str, Any]:
+        """Send agent-related alert to Slack"""
+        blocks = [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": f"🤖 Agent Alert: {agent_name}"
+                }
+            },
+            {
+                "type": "section",
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Alert Type:*\n{alert_type}"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": f"*Time:*\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                    }
+                ]
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Details:*\n{details}"
+                }
+            }
+        ]
+        
+        return await self.send_message(channel, f"Agent alert for {agent_name}", blocks)
+
+# services/advanced_analytics_service.py - Advanced Analytics Engine
+import pandas as pd
+import numpy as np
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+from models.agent import AgentInteraction
+from models.user import User
+
+class AdvancedAnalyticsService:
+    """Advanced analytics and insights for AI agents"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+    
+    async def generate_performance_insights(self, agent_id: int, time_period: int = 30) -> Dict[str, Any]:
+        """Generate comprehensive performance insights for an agent"""
+        
+        # Get interaction data
+        start_date = datetime.utcnow() - timedelta(days=time_period)
+        interactions = self.db.query(AgentInteraction).filter(
+            AgentInteraction.agent_id == agent_id,
+            AgentInteraction.created_at >= start_date
+        ).all()
+        
+        if not interactions:
+            return {"error": "No interaction data available"}
+        
+        # Convert to DataFrame for analysis
+        df = pd.DataFrame([{
+            'timestamp': i.created_at,
+            'user_query': i.user_query,
+            'agent_response': i.agent_response,
+            'metadata': i.metadata or {}
+        } for i in interactions])
+        
+        # Calculate metrics
+        total_interactions = len(df)
+        avg_response_length = df['agent_response'].str.len().mean()
+        
+        # Confidence analysis
+        confidences = [float(i.metadata.get('confidence', 0)) for i in interactions if i.metadata]
+        avg_confidence = np.mean(confidences) if confidences else 0
+        
+        # Time-based analysis
+        df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
+        hourly_distribution = df.groupby('hour').size().to_dict()
+        
+        # Query categorization
+        query_categories = self._categorize_queries([i.user_query for i in interactions])
+        
+        # Sentiment analysis
+        sentiment_scores = await self._analyze_sentiment([i.user_query for i in interactions])
+        
+        # Performance trends
+        df['date'] = pd.to_datetime(df['timestamp']).dt.date
+        daily_counts = df.groupby('date').size().to_dict()
+        
+        return {
+            "summary": {
+                "total_interactions": total_interactions,
+                "avg_response_length": round(avg_response_length, 2),
+                "avg_confidence": round(avg_confidence, 3),
+                "time_period_days": time_period
+            },
+            "temporal_analysis": {
+                "hourly_distribution": hourly_distribution,
+                "daily_trends": {str(k): v for k, v in daily_counts.items()}
+            },
+            "content_analysis": {
+                "query_categories": query_categories,
+                "sentiment_distribution": sentiment_scores
+            },
+            "performance_metrics": {
+                "confidence_distribution": {
+                    "high": len([c for c in confidences if c > 0.8]),
+                    "medium": len([c for c in confidences if 0.5 <= c <= 0.8]),
+                    "low": len([c for c in confidences if c < 0.5])
+                }
+            }
+        }
+    
+    def _categorize_queries(self, queries: List[str]) -> Dict[str, int]:
+        """Categorize queries using keyword matching"""
+        categories = {
+            "billing": ["bill", "payment", "insurance", "claim", "charge"],
+            "appointment": ["appointment", "schedule", "book", "cancel", "reschedule"],
+            "medical": ["symptom", "medication", "treatment", "diagnosis", "prescription"],
+            "general": ["hours", "location", "contact", "information", "help"]
+        }
+        
+        categorized = {"billing": 0, "appointment": 0, "medical": 0, "general": 0, "other": 0}
+        
+        for query in queries:
+            query_lower = query.lower()
+            categorized_flag = False
+            
+            for category, keywords in categories.items():
+                if any(keyword in query_lower for keyword in keywords):
+                    categorized[category] += 1
+                    categorized_flag = True
+                    break
+            
+            if not categorized_flag:
+                categorized["other"] += 1
+        
+        return categorized
+    
+    async def _analyze_sentiment(self, texts: List[str]) -> Dict[str, int]:
+        """Basic sentiment analysis (would integrate with proper NLP service)"""
+        # This is a simplified implementation
+        # In production, use services like AWS Comprehend, Google Cloud NL API, etc.
+        
+        positive_words = ["good", "great", "excellent", "thank", "helpful", "satisfied"]
+        negative_words = ["bad", "terrible", "frustrated", "angry", "unhappy", "problem"]
+        
+        sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
+        
+        for text in texts:
+            text_lower = text.lower()
+            positive_score = sum(1 for word in positive_words if word in text_lower)
+            negative_score = sum(1 for word in negative_words if word in text_lower)
+            
+            if positive_score > negative_score:
+                sentiment_counts["positive"] += 1
+            elif negative_score > positive_score:
+                sentiment_counts["negative"] += 1
+            else:
+                sentiment_counts["neutral"] += 1
+        
+        return sentiment_counts
+    
+    async def generate_practice_insights(self, practice_id: int) -> Dict[str, Any]:
+        """Generate insights across all agents in a practice"""
+        
+        # Get all agents for the practice
+        users = self.db.query(User).filter(User.practice_id == practice_id).all()
+        agent_ids = []
+        for user in users:
+            agent_ids.extend([agent.id for agent in user.agents])
+        
+        if not agent_ids:
+            return {"error": "No agents found for practice"}
+        
+        # Aggregate data across all agents
+        start_date = datetime.utcnow() - timedelta(days=30)
+        interactions = self.db.query(AgentInteraction).filter(
+            AgentInteraction.agent_id.in_(agent_ids),
+            AgentInteraction.created_at >= start_date
+        ).all()
+        
+        # Practice-level metrics
+        total_interactions = len(interactions)
+        unique_agents_used = len(set(i.agent_id for i in interactions))
+        
+        # ROI calculation (simplified)
+        estimated_time_saved = total_interactions * 3  # 3 minutes per interaction
+        estimated_cost_savings = estimated_time_saved * (25 / 60)  # $25/hour staff time
+        
+        return {
+            "practice_metrics": {
+                "total_interactions_30d": total_interactions,
+                "active_agents": unique_agents_used,
+                "estimated_time_saved_minutes": estimated_time_saved,
+                "estimated_cost_savings_usd": round(estimated_cost_savings, 2)
+            },
+            "recommendations": self._generate_recommendations(interactions),
+            "usage_trends": self._analyze_usage_trends(interactions)
+        }
+    
+    def _generate_recommendations(self, interactions: List[AgentInteraction]) -> List[str]:
+        """Generate actionable recommendations based on data"""
+        recommendations = []
+        
+        # Analyze confidence levels
+        confidences = [float(i.metadata.get('confidence', 0)) for i in interactions if i.metadata]
+        low_confidence_rate = len([c for c in confidences if c < 0.7]) / len(confidences) if confidences else 0
+        
+        if low_confidence_rate > 0.3:
+            recommendations.append("Consider adding more training data to improve agent confidence")
+        
+        # Analyze response times (if available)
+        # Check for common failure patterns
+        # Suggest optimization opportunities
+        
+        if not recommendations:
+            recommendations.append("Your agents are performing well! Consider expanding to additional use cases.")
+        
+        return recommendations
+    
+    def _analyze_usage_trends(self, interactions: List[AgentInteraction]) -> Dict[str, Any]:
+        """Analyze usage trends and patterns"""
+        if not interactions:
+            return {}
+        
+        df = pd.DataFrame([{
+            'timestamp': i.created_at,
+            'agent_id': i.agent_id
+        } for i in interactions])
+        
+        df['date'] = pd.to_datetime(df['timestamp']).dt.date
+        df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
+        
+        # Daily trends
+        daily_usage = df.groupby('date').size().to_dict()
+        
+        # Peak hours
+        hourly_usage = df.groupby('hour').size().to_dict()
+        peak_hour = max(hourly_usage, key=hourly_usage.get) if hourly_usage else 12
+        
+        # Agent popularity
+        agent_usage = df.groupby('agent_id').size().to_dict()
+        
+        return {
+            "daily_usage": {str(k): v for k, v in daily_usage.items()},
+            "peak_hour": peak_hour,
+            "agent_popularity": agent_usage
+        }
+
+# services/ai_training_service.py - AI Model Training and Fine-tuning
+import json
+import openai
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+
+class AITrainingService:
+    """Service for training and fine-tuning AI models"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+    
+    async def create_training_dataset(self, agent_id: int, include_feedback: bool = True) -> Dict[str, Any]:
+        """Create a training dataset from agent interactions"""
+        
+        # Get interactions for the agent
+        interactions = self.db.query(AgentInteraction).filter(
+            AgentInteraction.agent_id == agent_id
+        ).all()
+        
+        training_examples = []
+        
+        for interaction in interactions:
+            # Get feedback if available
+            feedback_score = None
+            if include_feedback and interaction.metadata:
+                feedback_score = interaction.metadata.get('user_feedback')
+            
+            # Only include high-quality interactions
+            confidence = interaction.metadata.get('confidence', 0) if interaction.metadata else 0
+            if confidence > 0.7 and (not include_feedback or feedback_score is None or feedback_score >= 4):
+                training_examples.append({
+                    "messages": [
+                        {"role": "user", "content": interaction.user_query},
+                        {"role": "assistant", "content": interaction.agent_response}
+                    ]
+                })
+        
+        # Save training dataset
+        dataset_file = f"training_data_{agent_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"
+        
+        with open(dataset_file, 'w') as f:
+            for example in training_examples:
+                f.write(json.dumps(example) + '\n')
+        
+        return {
+            "dataset_file": dataset_file,
+            "num_examples": len(training_examples),
+            "quality_threshold": 0.7
+        }
+    
+    async def fine_tune_model(self, agent_id: int, dataset_file: str) -> Dict[str, Any]:
+        """Fine-tune a model using OpenAI's fine-tuning API"""
+        
+        try:
+            # Upload training file
+            with open(dataset_file, 'rb') as f:
+                response = openai.File.create(
+                    file=f,
+                    purpose='fine-tune'
+                )
+            
+            file_id = response['id']
+            
+            # Create fine-tuning job
+            fine_tune_response = openai.FineTuningJob.create(
+                training_file=file_id,
+                model="gpt-3.5-turbo",
+                suffix=f"agent_{agent_id}"
+            )
+            
+            job_id = fine_tune_response['id']
+            
+            return {
+                "success": True,
+                "job_id": job_id,
+                "file_id": file_id,
+                "status": "created"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def check_fine_tune_status(self, job_id: str) -> Dict[str, Any]:
+        """Check the status of a fine-tuning job"""
+        
+        try:
+            response = openai.FineTuningJob.retrieve(job_id)
+            
+            return {
+                "job_id": job_id,
+                "status": response['status'],
+                "model": response.get('fine_tuned_model'),
+                "created_at": response['created_at'],
+                "finished_at": response.get('finished_at')
+            }
+            
+        except Exception as e:
+            return {
+                "error": str(e)
+            }
+
+# Enhanced API routes for new integrations
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+analytics_router = APIRouter()
+training_router = APIRouter()
+communications_router = APIRouter()
+
+@analytics_router.get("/agents/{agent_id}/insights")
+async def get_agent_insights(
+    agent_id: int,
+    time_period: int = 30,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get advanced analytics insights for an agent"""
+    analytics_service = AdvancedAnalyticsService(db)
+    return await analytics_service.generate_performance_insights(agent_id, time_period)
+
+@analytics_router.get("/practice/insights")
+async def get_practice_insights(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get practice-wide analytics insights"""
+    analytics_service = AdvancedAnalyticsService(db)
+    return await analytics_service.generate_practice_insights(current_user.practice_id)
+
+@training_router.post("/agents/{agent_id}/create_dataset")
+async def create_training_dataset(
+    agent_id: int,
+    include_feedback: bool = True,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a training dataset for an agent"""
+    training_service = AITrainingService(db)
+    return await training_service.create_training_dataset(agent_id, include_feedback)
+
+@training_router.post("/agents/{agent_id}/fine_tune")
+async def fine_tune_agent(
+    agent_id: int,
+    dataset_file: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Start fine-tuning process for an agent"""
+    training_service = AITrainingService(db)
+    return await training_service.fine_tune_model(agent_id, dataset_file)
+
+@communications_router.post("/send_sms")
+async def send_sms_notification(
+    phone_number: str,
+    message: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Send SMS notification via Twilio"""
+    twilio_config = {
+        'account_sid': os.getenv('TWILIO_ACCOUNT_SID'),
+        'auth_token': os.getenv('TWILIO_AUTH_TOKEN'),
+        'phone_number': os.getenv('TWILIO_PHONE_NUMBER')
+    }
+    
+    twilio = TwilioIntegration(twilio_config)
+    return await twilio.send_sms(phone_number, message)
+
+# Add routers to main app
+from main import app
+app.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
+app.include_router(training_router, prefix="/training", tags=["ai-training"])
+app.include_router(communications_router, prefix="/communications", tags=["communications"])

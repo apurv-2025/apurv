@@ -1,0 +1,1062 @@
+# Advanced Monitoring, Alerting, and Backup Solutions
+
+# monitoring/prometheus.yml - Enhanced Prometheus configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ai-agent-builder'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load alerting rules
+rule_files:
+  - "alerting-rules.yml"
+  - "recording-rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # AI Agent Builder Backend
+  - job_name: 'ai-agent-builder-backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    honor_labels: true
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Node/system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Nginx metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+
+  # Blackbox monitoring (uptime checks)
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - http://frontend:3000
+        - http://backend:8000/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+---
+
+# monitoring/alerting-rules.yml - Comprehensive alerting rules
+groups:
+  - name: ai-agent-builder-alerts
+    rules:
+      # High-level service alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} for {{ $labels.job }}"
+
+      # Database alerts
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connection usage high"
+          description: "PostgreSQL connection usage is above 80%"
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_database_blks_read[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "High number of disk reads indicating slow queries"
+
+      # Memory and CPU alerts
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 90%"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 85%"
+
+      # Application-specific alerts
+      - alert: AgentResponseTimeSlow
+        expr: histogram_quantile(0.95, rate(agent_response_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Agent response time slow"
+          description: "95th percentile response time is above 2 seconds"
+
+      - alert: LLMServiceErrors
+        expr: rate(llm_service_errors_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM service errors detected"
+          description: "LLM service error rate is {{ $value }}"
+
+      # Security alerts
+      - alert: HighFailedLogins
+        expr: rate(auth_failed_attempts_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High failed login attempts"
+          description: "Failed login rate is {{ $value }} per second"
+
+      - alert: UnauthorizedAccess
+        expr: rate(http_requests_total{status="401"}[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "Unauthorized access rate is {{ $value }} per second"
+
+      # HIPAA compliance alerts
+      - alert: DataAccessWithoutAudit
+        expr: increase(data_access_total[5m]) > increase(audit_logs_total[5m])
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Data access without proper audit logging"
+          description: "Potential HIPAA compliance violation detected"
+
+---
+
+# monitoring/grafana-dashboard.json - Comprehensive Grafana dashboard
+{
+  "dashboard": {
+    "id": null,
+    "title": "AI Agent Builder - Comprehensive Dashboard",
+    "tags": ["ai-agent-builder"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Health Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=~\"ai-agent-builder.*\"}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Response Time Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Database Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_xact_commit[5m])",
+            "refId": "A",
+            "legendFormat": "Commits"
+          },
+          {
+            "expr": "rate(pg_stat_database_xact_rollback[5m])",
+            "refId": "B",
+            "legendFormat": "Rollbacks"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Agent Performance Metrics",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "avg by (agent_id) (agent_response_duration_seconds)",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Security Events",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"ai-agent-builder-backend\"} |= \"security_event\"",
+            "refId": "A"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}
+
+---
+
+# monitoring/alertmanager.yml - Alert routing and notification
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@aiagentbuilder.com'
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+    - match_re:
+        alertname: '.*HIPAA.*|.*Security.*'
+      receiver: 'security-alerts'
+
+receivers:
+  - name: 'default'
+    email_configs:
+      - to: 'admin@example.com'
+        subject: '[AI Agent Builder] Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          Alert: {{ .GroupLabels.alertname }}
+          
+          {{ range .Alerts }}
+          Summary: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'admin@example.com,oncall@example.com'
+        subject: '[CRITICAL] AI Agent Builder Alert'
+    slack_configs:
+      - channel: '#alerts-critical'
+        title: 'Critical Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+  - name: 'warning-alerts'
+    slack_configs:
+      - channel: '#alerts-warning'
+        title: 'Warning Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+  - name: 'security-alerts'
+    email_configs:
+      - to: 'security@example.com,admin@example.com'
+        subject: '[SECURITY] AI Agent Builder Alert'
+    slack_configs:
+      - channel: '#security-alerts'
+        title: 'Security Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+---
+
+# scripts/backup.sh - Comprehensive backup strategy
+#!/bin/bash
+
+# AI Agent Builder - Comprehensive Backup Script
+# This script handles database, file, and configuration backups
+
+set -e
+
+# Configuration
+BACKUP_DIR="/backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+RETENTION_DAYS=30
+S3_BUCKET="ai-agent-builder-backups"
+
+# Database configuration
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-ai_agents_db}"
+DB_USER="${DB_USER:-postgres}"
+
+# Logging
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$BACKUP_DIR/backup.log"
+}
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR"
+
+log "Starting backup process..."
+
+# 1. Database backup
+backup_database() {
+    log "Backing up PostgreSQL database..."
+    
+    local backup_file="$BACKUP_DIR/db_backup_$TIMESTAMP.sql"
+    local compressed_file="$backup_file.gz"
+    
+    # Create database dump
+    PGPASSWORD="$DB_PASSWORD" pg_dump \
+        -h "$DB_HOST" \
+        -p "$DB_PORT" \
+        -U "$DB_USER" \
+        -d "$DB_NAME" \
+        --verbose \
+        --no-owner \
+        --no-acl \
+        --clean \
+        --if-exists \
+        > "$backup_file"
+    
+    # Compress the backup
+    gzip "$backup_file"
+    
+    # Upload to S3 if configured
+    if [ -n "$S3_BUCKET" ] && command -v aws &> /dev/null; then
+        aws s3 cp "$compressed_file" "s3://$S3_BUCKET/database/" --storage-class STANDARD_IA
+        log "Database backup uploaded to S3"
+    fi
+    
+    log "Database backup completed: $compressed_file"
+}
+
+# 2. File system backup
+backup_files() {
+    log "Backing up application files..."
+    
+    local backup_file="$BACKUP_DIR/files_backup_$TIMESTAMP.tar.gz"
+    
+    # Backup uploads and configuration
+    tar -czf "$backup_file" \
+        -C / \
+        --exclude="*/venv/*" \
+        --exclude="*/node_modules/*" \
+        --exclude="*/__pycache__/*" \
+        --exclude="*/logs/*" \
+        --exclude="*/backups/*" \
+        uploads/ \
+        backend/alembic/ \
+        backend/config/ \
+        nginx/ \
+        docker-compose*.yml \
+        .env
+    
+    # Upload to S3
+    if [ -n "$S3_BUCKET" ] && command -v aws &> /dev/null; then
+        aws s3 cp "$backup_file" "s3://$S3_BUCKET/files/" --storage-class STANDARD_IA
+        log "File backup uploaded to S3"
+    fi
+    
+    log "File backup completed: $backup_file"
+}
+
+# 3. Configuration backup
+backup_config() {
+    log "Backing up configuration..."
+    
+    local config_file="$BACKUP_DIR/config_backup_$TIMESTAMP.tar.gz"
+    
+    # Create configuration backup
+    tar -czf "$config_file" \
+        k8s/ \
+        monitoring/ \
+        scripts/ \
+        .github/
+    
+    # Upload to S3
+    if [ -n "$S3_BUCKET" ] && command -v aws &> /dev/null; then
+        aws s3 cp "$config_file" "s3://$S3_BUCKET/config/" --storage-class STANDARD_IA
+    fi
+    
+    log "Configuration backup completed: $config_file"
+}
+
+# 4. Vector database backup (if using FAISS)
+backup_vector_db() {
+    if [ -f "faiss_index.bin" ]; then
+        log "Backing up vector database..."
+        
+        local vector_backup="$BACKUP_DIR/vector_db_$TIMESTAMP.tar.gz"
+        
+        tar -czf "$vector_backup" \
+            faiss_index.bin \
+            documents.pkl
+        
+        if [ -n "$S3_BUCKET" ] && command -v aws &> /dev/null; then
+            aws s3 cp "$vector_backup" "s3://$S3_BUCKET/vector_db/" --storage-class STANDARD_IA
+        fi
+        
+        log "Vector database backup completed: $vector_backup"
+    fi
+}
+
+# 5. Cleanup old backups
+cleanup_old_backups() {
+    log "Cleaning up old backups (older than $RETENTION_DAYS days)..."
+    
+    find "$BACKUP_DIR" -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
+    find "$BACKUP_DIR" -name "*.tar.gz" -mtime +$RETENTION_DAYS -delete
+    
+    # Cleanup S3 backups
+    if [ -n "$S3_BUCKET" ] && command -v aws &> /dev/null; then
+        aws s3api list-objects-v2 \
+            --bucket "$S3_BUCKET" \
+            --query "Contents[?LastModified<'$(date -d "$RETENTION_DAYS days ago" --iso-8601)'].Key" \
+            --output text | \
+        xargs -r -I {} aws s3 rm "s3://$S3_BUCKET/{}"
+    fi
+    
+    log "Cleanup completed"
+}
+
+# 6. Health check and validation
+validate_backup() {
+    log "Validating backup integrity..."
+    
+    # Test database backup
+    local latest_db_backup=$(ls -t "$BACKUP_DIR"/db_backup_*.sql.gz | head -1)
+    if [ -f "$latest_db_backup" ]; then
+        # Test if the compressed file is valid
+        if gzip -t "$latest_db_backup"; then
+            log "Database backup validation: PASSED"
+        else
+            log "Database backup validation: FAILED"
+            exit 1
+        fi
+    fi
+    
+    # Test file backup
+    local latest_file_backup=$(ls -t "$BACKUP_DIR"/files_backup_*.tar.gz | head -1)
+    if [ -f "$latest_file_backup" ]; then
+        if tar -tzf "$latest_file_backup" > /dev/null; then
+            log "File backup validation: PASSED"
+        else
+            log "File backup validation: FAILED"
+            exit 1
+        fi
+    fi
+    
+    log "Backup validation completed"
+}
+
+# 7. Send notification
+send_notification() {
+    local status=$1
+    local message="AI Agent Builder backup $status at $(date)"
+    
+    # Send email notification
+    if command -v mail &> /dev/null; then
+        echo "$message" | mail -s "Backup $status" admin@example.com
+    fi
+    
+    # Send Slack notification
+    if [ -n "$SLACK_WEBHOOK" ]; then
+        curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"$message\"}" \
+            "$SLACK_WEBHOOK"
+    fi
+    
+    log "Notification sent: $status"
+}
+
+# Main execution
+main() {
+    local start_time=$(date +%s)
+    
+    trap 'send_notification "FAILED"; exit 1' ERR
+    
+    backup_database
+    backup_files
+    backup_config
+    backup_vector_db
+    validate_backup
+    cleanup_old_backups
+    
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
+    log "Backup process completed successfully in ${duration} seconds"
+    send_notification "COMPLETED"
+}
+
+# Run main function
+main "$@"
+
+---
+
+# scripts/restore.sh - Comprehensive restore script
+#!/bin/bash
+
+# AI Agent Builder - Restore Script
+
+set -e
+
+BACKUP_DIR="/backups"
+RESTORE_DATE=""
+S3_BUCKET="ai-agent-builder-backups"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+show_usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo "Options:"
+    echo "  -d DATE     Restore from specific date (YYYYMMDD_HHMMSS)"
+    echo "  -l          List available backups"
+    echo "  -h          Show this help"
+}
+
+list_backups() {
+    log "Available local backups:"
+    ls -la "$BACKUP_DIR"/*.gz 2>/dev/null || echo "No local backups found"
+    
+    if [ -n "$S3_BUCKET" ] && command -v aws &> /dev/null; then
+        log "Available S3 backups:"
+        aws s3 ls "s3://$S3_BUCKET/" --recursive
+    fi
+}
+
+download_from_s3() {
+    local backup_type=$1
+    local date=$2
+    
+    if [ -n "$S3_BUCKET" ] && command -v aws &> /dev/null; then
+        log "Downloading backup from S3..."
+        aws s3 cp "s3://$S3_BUCKET/$backup_type/" "$BACKUP_DIR/" --recursive
+    fi
+}
+
+restore_database() {
+    local backup_file=""
+    
+    if [ -n "$RESTORE_DATE" ]; then
+        backup_file="$BACKUP_DIR/db_backup_${RESTORE_DATE}.sql.gz"
+    else
+        backup_file=$(ls -t "$BACKUP_DIR"/db_backup_*.sql.gz | head -1)
+    fi
+    
+    if [ ! -f "$backup_file" ]; then
+        log "Database backup file not found: $backup_file"
+        return 1
+    fi
+    
+    log "Restoring database from: $backup_file"
+    
+    # Stop application services
+    docker-compose stop backend || true
+    
+    # Restore database
+    gunzip -c "$backup_file" | PGPASSWORD="$DB_PASSWORD" psql \
+        -h "$DB_HOST" \
+        -p "$DB_PORT" \
+        -U "$DB_USER" \
+        -d "$DB_NAME"
+    
+    log "Database restore completed"
+}
+
+restore_files() {
+    local backup_file=""
+    
+    if [ -n "$RESTORE_DATE" ]; then
+        backup_file="$BACKUP_DIR/files_backup_${RESTORE_DATE}.tar.gz"
+    else
+        backup_file=$(ls -t "$BACKUP_DIR"/files_backup_*.tar.gz | head -1)
+    fi
+    
+    if [ ! -f "$backup_file" ]; then
+        log "File backup not found: $backup_file"
+        return 1
+    fi
+    
+    log "Restoring files from: $backup_file"
+    
+    # Create backup of current files
+    tar -czf "$BACKUP_DIR/pre_restore_backup_$(date +%Y%m%d_%H%M%S).tar.gz" uploads/
+    
+    # Restore files
+    tar -xzf "$backup_file" -C /
+    
+    log "File restore completed"
+}
+
+# Parse command line arguments
+while getopts "d:lh" opt; do
+    case $opt in
+        d)
+            RESTORE_DATE="$OPTARG"
+            ;;
+        l)
+            list_backups
+            exit 0
+            ;;
+        h)
+            show_usage
+            exit 0
+            ;;
+        \?)
+            show_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Main restore process
+main() {
+    log "Starting restore process..."
+    
+    # Confirm restore operation
+    echo "WARNING: This will restore data and may overwrite current data."
+    read -p "Are you sure you want to continue? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log "Restore cancelled"
+        exit 0
+    fi
+    
+    download_from_s3 "database" "$RESTORE_DATE"
+    download_from_s3 "files" "$RESTORE_DATE"
+    
+    restore_database
+    restore_files
+    
+    # Restart services
+    docker-compose up -d
+    
+    log "Restore process completed"
+}
+
+main "$@"
+
+---
+
+# scripts/health-check.sh - Comprehensive health monitoring
+#!/bin/bash
+
+# AI Agent Builder - Health Check Script
+
+set -e
+
+HEALTH_CHECK_URL="http://localhost:8000/health/detailed"
+SLACK_WEBHOOK=""
+EMAIL_RECIPIENT="admin@example.com"
+LOG_FILE="/var/log/ai-agent-builder-health.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+check_service_health() {
+    local service_name=$1
+    local check_url=$2
+    local expected_status=${3:-200}
+    
+    log "Checking $service_name health..."
+    
+    local response_code=$(curl -s -o /dev/null -w "%{http_code}" "$check_url" || echo "000")
+    
+    if [ "$response_code" = "$expected_status" ]; then
+        log "$service_name: HEALTHY (HTTP $response_code)"
+        return 0
+    else
+        log "$service_name: UNHEALTHY (HTTP $response_code)"
+        return 1
+    fi
+}
+
+check_database_connection() {
+    log "Checking database connection..."
+    
+    if PGPASSWORD="$DB_PASSWORD" pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" > /dev/null 2>&1; then
+        log "Database: HEALTHY"
+        return 0
+    else
+        log "Database: UNHEALTHY"
+        return 1
+    fi
+}
+
+check_redis_connection() {
+    log "Checking Redis connection..."
+    
+    if redis-cli -h localhost ping > /dev/null 2>&1; then
+        log "Redis: HEALTHY"
+        return 0
+    else
+        log "Redis: UNHEALTHY"
+        return 1
+    fi
+}
+
+check_disk_space() {
+    log "Checking disk space..."
+    
+    local usage=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+    
+    if [ "$usage" -lt 85 ]; then
+        log "Disk space: HEALTHY ($usage% used)"
+        return 0
+    else
+        log "Disk space: WARNING ($usage% used)"
+        return 1
+    fi
+}
+
+check_memory_usage() {
+    log "Checking memory usage..."
+    
+    local usage=$(free | awk 'NR==2{printf "%.0f", $3*100/$2}')
+    
+    if [ "$usage" -lt 90 ]; then
+        log "Memory usage: HEALTHY ($usage% used)"
+        return 0
+    else
+        log "Memory usage: WARNING ($usage% used)"
+        return 1
+    fi
+}
+
+check_ssl_certificate() {
+    local domain=$1
+    
+    if [ -z "$domain" ]; then
+        return 0
+    fi
+    
+    log "Checking SSL certificate for $domain..."
+    
+    local expiry_date=$(openssl s_client -servername "$domain" -connect "$domain:443" < /dev/null 2>/dev/null | openssl x509 -noout -dates | grep notAfter | cut -d= -f2)
+    local expiry_epoch=$(date -d "$expiry_date" +%s)
+    local current_epoch=$(date +%s)
+    local days_until_expiry=$(( (expiry_epoch - current_epoch) / 86400 ))
+    
+    if [ "$days_until_expiry" -gt 30 ]; then
+        log "SSL certificate: HEALTHY ($days_until_expiry days until expiry)"
+        return 0
+    else
+        log "SSL certificate: WARNING ($days_until_expiry days until expiry)"
+        return 1
+    fi
+}
+
+send_alert() {
+    local message="$1"
+    local severity="$2"
+    
+    # Send email alert
+    if command -v mail &> /dev/null && [ -n "$EMAIL_RECIPIENT" ]; then
+        echo "$message" | mail -s "AI Agent Builder Health Alert - $severity" "$EMAIL_RECIPIENT"
+    fi
+    
+    # Send Slack alert
+    if [ -n "$SLACK_WEBHOOK" ]; then
+        local color="danger"
+        if [ "$severity" = "WARNING" ]; then
+            color="warning"
+        fi
+        
+        curl -X POST -H 'Content-type: application/json' \
+            --data "{
+                \"attachments\": [{
+                    \"color\": \"$color\",
+                    \"title\": \"AI Agent Builder Health Alert\",
+                    \"text\": \"$message\",
+                    \"ts\": $(date +%s)
+                }]
+            }" \
+            "$SLACK_WEBHOOK" > /dev/null 2>&1
+    fi
+}
+
+# Main health check
+main() {
+    log "Starting comprehensive health check..."
+    
+    local failed_checks=0
+    local warning_checks=0
+    local total_checks=0
+    
+    # Service health checks
+    services=(
+        "Backend:http://localhost:8000/health:200"
+        "Frontend:http://localhost:3000:200"
+    )
+    
+    for service_info in "${services[@]}"; do
+        IFS=':' read -r name url status <<< "$service_info"
+        total_checks=$((total_checks + 1))
+        
+        if ! check_service_health "$name" "$url" "$status"; then
+            failed_checks=$((failed_checks + 1))
+        fi
+    done
+    
+    # Infrastructure checks
+    infrastructure_checks=(
+        "check_database_connection"
+        "check_redis_connection"
+        "check_disk_space"
+        "check_memory_usage"
+    )
+    
+    for check in "${infrastructure_checks[@]}"; do
+        total_checks=$((total_checks + 1))
+        
+        if ! $check; then
+            if [[ "$check" == *"disk_space"* ]] || [[ "$check" == *"memory"* ]]; then
+                warning_checks=$((warning_checks + 1))
+            else
+                failed_checks=$((failed_checks + 1))
+            fi
+        fi
+    done
+    
+    # SSL certificate check (if domain provided)
+    if [ -n "$SSL_DOMAIN" ]; then
+        total_checks=$((total_checks + 1))
+        if ! check_ssl_certificate "$SSL_DOMAIN"; then
+            warning_checks=$((warning_checks + 1))
+        fi
+    fi
+    
+    # Summary and alerting
+    log "Health check completed: $total_checks total, $failed_checks failed, $warning_checks warnings"
+    
+    if [ "$failed_checks" -gt 0 ]; then
+        send_alert "Health check FAILED: $failed_checks critical issues detected" "CRITICAL"
+        exit 1
+    elif [ "$warning_checks" -gt 0 ]; then
+        send_alert "Health check WARNING: $warning_checks issues detected" "WARNING"
+        exit 2
+    else
+        log "All health checks PASSED"
+        exit 0
+    fi
+}
+
+# Run health check
+main "$@"
+
+---
+
+# docker-compose.monitoring.yml - Complete monitoring stack
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-agent-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alerting-rules.yml:/etc/prometheus/alerting-rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-agent-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: ai-agent-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: ai-agent-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: ai-agent-postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:password@postgres:5432/ai_agents_db?sslmode=disable"
+    restart: unless-stopped
+    networks:
+      - monitoring
+      - ai-agent-network
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: ai-agent-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    restart: unless-stopped
+    networks:
+      - monitoring
+      - ai-agent-network
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: ai-agent-blackbox-exporter
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+
+networks:
+  monitoring:
+    driver: bridge
+  ai-agent-network:
+    external: true

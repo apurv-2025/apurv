@@ -1,0 +1,67 @@
+import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Sidebar from './components/ui/Sidebar';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import  AdvancedAnalytics  from './pages/AdvancedAnalytics';
+import  TemplateLibrary  from './pages/TemplateLibrary';
+import  ComplianceMonitoring  from './pages/ComplianceMonitoring';
+import AgentManagement from './pages/AgentManagement';
+import KnowledgeBase from './pages/KnowledgeBase';
+import Settings from './pages/Settings';
+
+// Main App Component
+const App = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'agents':
+        return <AgentManagement />;
+      case 'knowledge':
+        return <KnowledgeBase />;
+      case 'settings':
+        return <Settings />;
+      case 'analytics': 
+        return <AdvancedAnalytics />;
+      case 'templates': 
+        return <TemplateLibrary />;
+      case 'compliance': 
+        return <ComplianceMonitoring />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="flex-1 overflow-auto">
+        {renderContent()}
+      </div>
+    </div>
+  );
+};
+
+// Root App with Auth Provider
+const AIAgentBuilder = () => {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+};
+
+export default AIAgentBuilder;

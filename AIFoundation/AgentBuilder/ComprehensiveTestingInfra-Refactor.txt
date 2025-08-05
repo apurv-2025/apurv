@@ -1,0 +1,1009 @@
+# Comprehensive Testing Infrastructure
+
+# backend/tests/conftest.py - Enhanced test configuration
+import pytest
+import asyncio
+import os
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+import redis
+from unittest.mock import Mock, patch
+
+from main import app
+from models.database import get_db, Base
+from models.user import User
+from models.agent import Agent
+from services.llm_service import LLMService
+from services.vector_service import VectorService
+
+# Test database setup
+SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
+
+engine = create_engine(
+    SQLALCHEMY_TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+def override_get_db():
+    try:
+        db = TestingSessionLocal()
+        yield db
+    finally:
+        db.close()
+
+app.dependency_overrides[get_db] = override_get_db
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+@pytest.fixture
+def db_session():
+    """Get a database session for testing."""
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+    
+    yield session
+    
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+@pytest.fixture
+def test_user(db_session):
+    """Create a test user."""
+    user = User(
+        email="test@example.com",
+        hashed_password="$2b$12$test_hashed_password",
+        full_name="Test User",
+        practice_name="Test Practice",
+        role="admin",
+        is_active=True
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+@pytest.fixture
+def test_agent(db_session, test_user):
+    """Create a test agent."""
+    agent = Agent(
+        name="Test Agent",
+        description="A test agent for billing",
+        role="billing",
+        persona="Professional and helpful",
+        instructions="Help with billing inquiries",
+        configuration={"max_tokens": 500},
+        owner_id=test_user.id
+    )
+    db_session.add(agent)
+    db_session.commit()
+    db_session.refresh(agent)
+    return agent
+
+@pytest.fixture
+def auth_headers(client, test_user):
+    """Get authentication headers for API requests."""
+    response = client.post("/auth/token", data={
+        "username": test_user.email,
+        "password": "test_password"
+    })
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+@pytest.fixture
+def mock_llm_service():
+    """Mock LLM service for testing."""
+    with patch('services.llm_service.LLMService') as mock:
+        mock_instance = Mock()
+        mock_instance.generate_response.return_value = {
+            "response": "Test response from AI agent",
+            "confidence": 0.85
+        }
+        mock.return_value = mock_instance
+        yield mock_instance
+
+@pytest.fixture
+def mock_vector_service():
+    """Mock vector service for testing."""
+    with patch('services.vector_service.VectorService') as mock:
+        mock_instance = Mock()
+        mock_instance.add_document.return_value = "mock_vector_id"
+        mock_instance.search_similar.return_value = "Mock search results"
+        mock.return_value = mock_instance
+        yield mock_instance
+
+@pytest.fixture
+def mock_redis():
+    """Mock Redis for testing."""
+    with patch('redis.Redis') as mock:
+        mock_instance = Mock()
+        mock.return_value = mock_instance
+        yield mock_instance
+
+# backend/tests/test_models.py - Model tests
+import pytest
+from datetime import datetime
+from models.user import User
+from models.agent import Agent, KnowledgeBase, AgentInteraction
+
+class TestUserModel:
+    def test_create_user(self, db_session):
+        user = User(
+            email="newuser@example.com",
+            hashed_password="hashed_password",
+            full_name="New User",
+            practice_name="New Practice"
+        )
+        db_session.add(user)
+        db_session.commit()
+        
+        assert user.id is not None
+        assert user.email == "newuser@example.com"
+        assert user.is_active is True
+        assert user.created_at is not None
+
+    def test_user_relationships(self, db_session, test_user):
+        agent = Agent(
+            name="Test Agent",
+            role="billing",
+            owner_id=test_user.id
+        )
+        db_session.add(agent)
+        db_session.commit()
+        
+        # Test relationship
+        assert len(test_user.agents) == 1
+        assert test_user.agents[0].name == "Test Agent"
+
+class TestAgentModel:
+    def test_create_agent(self, db_session, test_user):
+        agent = Agent(
+            name="Billing Assistant",
+            description="Helps with billing",
+            role="billing",
+            persona="Professional",
+            instructions="Be helpful",
+            owner_id=test_user.id
+        )
+        db_session.add(agent)
+        db_session.commit()
+        
+        assert agent.id is not None
+        assert agent.name == "Billing Assistant"
+        assert agent.is_active is True
+
+    def test_agent_configuration(self, db_session, test_user):
+        config = {"max_tokens": 1000, "temperature": 0.7}
+        agent = Agent(
+            name="Configured Agent",
+            role="general",
+            configuration=config,
+            owner_id=test_user.id
+        )
+        db_session.add(agent)
+        db_session.commit()
+        
+        assert agent.configuration == config
+
+# backend/tests/test_api_auth.py - Authentication API tests
+import pytest
+from fastapi import status
+
+class TestAuthentication:
+    def test_register_user_success(self, client):
+        user_data = {
+            "email": "newuser@example.com",
+            "password": "StrongPassword123!",
+            "full_name": "New User",
+            "practice_name": "New Practice",
+            "role": "admin"
+        }
+        
+        response = client.post("/auth/register", json=user_data)
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["email"] == user_data["email"]
+        assert "id" in data
+        assert "hashed_password" not in data
+
+    def test_register_duplicate_email(self, client, test_user):
+        user_data = {
+            "email": test_user.email,
+            "password": "Password123!",
+            "full_name": "Duplicate User",
+            "practice_name": "Duplicate Practice"
+        }
+        
+        response = client.post("/auth/register", json=user_data)
+        
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already registered" in response.json()["detail"].lower()
+
+    def test_register_weak_password(self, client):
+        user_data = {
+            "email": "weak@example.com",
+            "password": "weak",
+            "full_name": "Weak Password User",
+            "practice_name": "Test Practice"
+        }
+        
+        response = client.post("/auth/register", json=user_data)
+        
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_login_success(self, client, test_user):
+        response = client.post("/auth/token", data={
+            "username": test_user.email,
+            "password": "test_password"
+        })
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
+
+    def test_login_invalid_credentials(self, client):
+        response = client.post("/auth/token", data={
+            "username": "invalid@example.com",
+            "password": "wrongpassword"
+        })
+        
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_get_current_user(self, client, auth_headers):
+        response = client.get("/auth/me", headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "email" in data
+        assert "full_name" in data
+
+    def test_get_current_user_invalid_token(self, client):
+        headers = {"Authorization": "Bearer invalid_token"}
+        response = client.get("/auth/me", headers=headers)
+        
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+# backend/tests/test_api_agents.py - Agent API tests
+import pytest
+from fastapi import status
+
+class TestAgentAPI:
+    def test_create_agent_success(self, client, auth_headers):
+        agent_data = {
+            "name": "New Agent",
+            "description": "A new test agent",
+            "role": "billing",
+            "persona": "Professional and helpful",
+            "instructions": "Help with billing inquiries",
+            "configuration": {"max_tokens": 500}
+        }
+        
+        response = client.post("/agents/", json=agent_data, headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["name"] == agent_data["name"]
+        assert data["role"] == agent_data["role"]
+        assert "id" in data
+
+    def test_create_agent_invalid_role(self, client, auth_headers):
+        agent_data = {
+            "name": "Invalid Agent",
+            "description": "Invalid role",
+            "role": "invalid_role",
+            "persona": "Test",
+            "instructions": "Test"
+        }
+        
+        response = client.post("/agents/", json=agent_data, headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def test_get_agents(self, client, auth_headers, test_agent):
+        response = client.get("/agents/", headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+
+    def test_get_agent_by_id(self, client, auth_headers, test_agent):
+        response = client.get(f"/agents/{test_agent.id}", headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == test_agent.id
+        assert data["name"] == test_agent.name
+
+    def test_get_agent_not_found(self, client, auth_headers):
+        response = client.get("/agents/99999", headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_update_agent(self, client, auth_headers, test_agent):
+        update_data = {"name": "Updated Agent Name"}
+        
+        response = client.put(
+            f"/agents/{test_agent.id}", 
+            json=update_data, 
+            headers=auth_headers
+        )
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["name"] == "Updated Agent Name"
+
+    def test_delete_agent(self, client, auth_headers, test_agent):
+        response = client.delete(f"/agents/{test_agent.id}", headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Verify deletion
+        get_response = client.get(f"/agents/{test_agent.id}", headers=auth_headers)
+        assert get_response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_chat_with_agent(self, client, auth_headers, test_agent, mock_llm_service):
+        chat_data = {
+            "agent_id": test_agent.id,
+            "message": "Hello, can you help me?"
+        }
+        
+        response = client.post("/agents/chat", json=chat_data, headers=auth_headers)
+        
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "response" in data
+        assert "confidence" in data
+        mock_llm_service.generate_response.assert_called_once()
+
+    def test_unauthorized_access(self, client, test_agent):
+        response = client.get(f"/agents/{test_agent.id}")
+        
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+# backend/tests/test_services.py - Service tests
+import pytest
+from unittest.mock import Mock, patch, AsyncMock
+from services.llm_service import LLMService
+from services.vector_service import VectorService
+from services.security_service import SecurityService
+
+class TestLLMService:
+    @pytest.mark.asyncio
+    async def test_generate_response_openai(self, test_agent, db_session):
+        with patch('openai.ChatCompletion.create') as mock_openai:
+            mock_openai.return_value.choices = [
+                Mock(message=Mock(content="Test response"))
+            ]
+            
+            llm_service = LLMService()
+            response = await llm_service.generate_response(
+                agent=test_agent,
+                user_message="Test message",
+                db=db_session
+            )
+            
+            assert response["response"] == "Test response"
+            assert "confidence" in response
+
+    @pytest.mark.asyncio
+    async def test_generate_response_with_phi_detection(self, test_agent, db_session):
+        llm_service = LLMService()
+        
+        # Test message with PHI
+        response = await llm_service.generate_response(
+            agent=test_agent,
+            user_message="My SSN is 123-45-6789",
+            db=db_session
+        )
+        
+        assert "cannot process" in response["response"].lower()
+        assert response["confidence"] == 0.0
+
+class TestVectorService:
+    @pytest.mark.asyncio
+    async def test_add_document_faiss(self):
+        with patch('sentence_transformers.SentenceTransformer') as mock_model:
+            mock_model.return_value.encode.return_value = [0.1] * 384
+            
+            vector_service = VectorService()
+            vector_service.provider = "faiss"
+            
+            vector_id = await vector_service.add_document(
+                content="Test document",
+                metadata={"agent_id": 1}
+            )
+            
+            assert vector_id.startswith("doc_")
+
+    @pytest.mark.asyncio
+    async def test_search_similar_faiss(self):
+        with patch('sentence_transformers.SentenceTransformer') as mock_model:
+            mock_model.return_value.encode.return_value = [0.1] * 384
+            
+            vector_service = VectorService()
+            vector_service.provider = "faiss"
+            
+            # Mock the search results
+            vector_service.documents = {
+                0: {
+                    "id": "test_doc",
+                    "content": "Test content",
+                    "metadata": {"agent_id": 1}
+                }
+            }
+            
+            with patch.object(vector_service.index, 'search') as mock_search:
+                mock_search.return_value = ([0.8], [0])
+                
+                result = await vector_service.search_similar(
+                    query="test query",
+                    agent_id=1
+                )
+                
+                assert "Test content" in result
+
+class TestSecurityService:
+    def test_hash_password(self):
+        security_service = SecurityService()
+        password = "test_password"
+        
+        hashed = security_service.hash_password(password)
+        
+        assert hashed != password
+        assert security_service.verify_password(password, hashed)
+
+    def test_validate_password_strength(self):
+        security_service = SecurityService()
+        
+        # Test weak password
+        result = security_service.validate_password_strength("weak")
+        assert not result["valid"]
+        assert len(result["issues"]) > 0
+        
+        # Test strong password
+        result = security_service.validate_password_strength("StrongPassword123!")
+        assert result["valid"]
+        assert len(result["issues"]) == 0
+
+    def test_detect_pii(self):
+        security_service = SecurityService()
+        
+        # Test text with PII
+        result = security_service.detect_pii("My SSN is 123-45-6789")
+        assert result["has_pii"]
+        assert "ssn" in result["types"]
+        
+        # Test text without PII
+        result = security_service.detect_pii("This is normal text")
+        assert not result["has_pii"]
+
+# backend/tests/test_integrations.py - Integration tests
+import pytest
+from unittest.mock import Mock, patch, AsyncMock
+from integrations.epic_integration import EpicIntegration
+from integrations.integration_manager import IntegrationManager, IntegrationType
+
+class TestEpicIntegration:
+    @pytest.mark.asyncio
+    async def test_authenticate_success(self):
+        config = {
+            "client_id": "test_client",
+            "client_secret": "test_secret",
+            "base_url": "https://test.epic.com"
+        }
+        
+        epic = EpicIntegration(config)
+        
+        with patch('aiohttp.ClientSession.post') as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json.return_value = {"access_token": "test_token"}
+            mock_post.return_value.__aenter__.return_value = mock_response
+            
+            result = await epic.authenticate()
+            
+            assert result is True
+            assert epic.access_token == "test_token"
+
+    @pytest.mark.asyncio
+    async def test_get_patients(self):
+        config = {
+            "client_id": "test_client",
+            "client_secret": "test_secret",
+            "fhir_base_url": "https://fhir.epic.com"
+        }
+        
+        epic = EpicIntegration(config)
+        epic.access_token = "test_token"
+        
+        mock_patient_data = {
+            "entry": [{
+                "resource": {
+                    "id": "patient_123",
+                    "name": [{"given": ["John"], "family": "Doe"}],
+                    "birthDate": "1990-01-01",
+                    "telecom": [
+                        {"system": "phone", "value": "555-1234"},
+                        {"system": "email", "value": "john@example.com"}
+                    ]
+                }
+            }]
+        }
+        
+        with patch('aiohttp.ClientSession.get') as mock_get:
+            mock_response = AsyncMock()
+            mock_response.status = 200
+            mock_response.json.return_value = mock_patient_data
+            mock_get.return_value.__aenter__.return_value = mock_response
+            
+            patients = await epic.get_patients()
+            
+            assert len(patients) == 1
+            assert patients[0].patient_id == "patient_123"
+            assert patients[0].first_name == "John"
+            assert patients[0].last_name == "Doe"
+
+class TestIntegrationManager:
+    def test_register_integration(self):
+        manager = IntegrationManager()
+        
+        config = {
+            "enabled": True,
+            "client_id": "test_client",
+            "client_secret": "test_secret"
+        }
+        
+        result = manager.register_integration(IntegrationType.EPIC, config)
+        
+        assert result is True
+        assert IntegrationType.EPIC in manager.integrations
+        assert IntegrationType.EPIC in manager.enabled_integrations
+
+# Load testing with locust
+# backend/tests/load_test.py
+from locust import HttpUser, task, between
+
+class AIAgentBuilderUser(HttpUser):
+    wait_time = between(1, 3)
+    
+    def on_start(self):
+        """Login when the user starts"""
+        response = self.client.post("/auth/token", data={
+            "username": "test@example.com",
+            "password": "test_password"
+        })
+        
+        if response.status_code == 200:
+            token = response.json()["access_token"]
+            self.client.headers.update({"Authorization": f"Bearer {token}"})
+
+    @task(3)
+    def get_agents(self):
+        """Get list of agents"""
+        self.client.get("/agents/")
+
+    @task(2)
+    def get_dashboard_stats(self):
+        """Get dashboard statistics"""
+        self.client.get("/health/detailed")
+
+    @task(1)
+    def chat_with_agent(self):
+        """Chat with an agent"""
+        self.client.post("/agents/chat", json={
+            "agent_id": 1,
+            "message": "Hello, can you help me with billing?"
+        })
+
+    @task(1)
+    def get_knowledge_base(self):
+        """Get knowledge base items"""
+        self.client.get("/knowledge/1")
+
+# Frontend testing with Jest and React Testing Library
+# frontend/src/components/__tests__/Dashboard.test.js
+"""
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AuthProvider } from '../contexts/AuthContext';
+import Dashboard from '../Dashboard';
+
+// Mock API calls
+jest.mock('../services/api', () => ({
+  getAgents: jest.fn(),
+  getDashboardStats: jest.fn(),
+}));
+
+const MockAuthProvider = ({ children }) => {
+  const mockUser = {
+    id: 1,
+    email: 'test@example.com',
+    full_name: 'Test User',
+    practice_name: 'Test Practice'
+  };
+
+  return (
+    <AuthProvider value={{ user: mockUser, loading: false }}>
+      {children}
+    </AuthProvider>
+  );
+};
+
+describe('Dashboard', () => {
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+  });
+
+  test('renders dashboard with user greeting', async () => {
+    render(
+      <MockAuthProvider>
+        <Dashboard />
+      </MockAuthProvider>
+    );
+
+    expect(screen.getByText(/Test User/)).toBeInTheDocument();
+    expect(screen.getByText(/Test Practice/)).toBeInTheDocument();
+  });
+
+  test('displays agent statistics', async () => {
+    const mockStats = {
+      totalAgents: 5,
+      activeAgents: 4,
+      totalInteractions: 150
+    };
+
+    api.getDashboardStats.mockResolvedValue(mockStats);
+
+    render(
+      <MockAuthProvider>
+        <Dashboard />
+      </MockAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getByText('4')).toBeInTheDocument();
+      expect(screen.getByText('150')).toBeInTheDocument();
+    });
+  });
+
+  test('handles quick action clicks', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MockAuthProvider>
+        <Dashboard />
+      </MockAuthProvider>
+    );
+
+    const createAgentButton = screen.getByText('Create Agent');
+    await user.click(createAgentButton);
+
+    // Verify navigation or modal opening
+    // This depends on your routing implementation
+  });
+});
+"""
+
+# E2E testing with Playwright
+# frontend/tests/e2e/auth.spec.js
+"""
+import { test, expect } from '@playwright/test';
+
+test.describe('Authentication', () => {
+  test('should login successfully', async ({ page }) => {
+    await page.goto('/');
+    
+    // Fill login form
+    await page.fill('[data-testid="email-input"]', 'test@example.com');
+    await page.fill('[data-testid="password-input"]', 'test_password');
+    
+    // Click login button
+    await page.click('[data-testid="login-button"]');
+    
+    // Verify redirect to dashboard
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.locator('[data-testid="user-greeting"]')).toContainText('Test User');
+  });
+
+  test('should show error for invalid credentials', async ({ page }) => {
+    await page.goto('/');
+    
+    await page.fill('[data-testid="email-input"]', 'invalid@example.com');
+    await page.fill('[data-testid="password-input"]', 'wrong_password');
+    await page.click('[data-testid="login-button"]');
+    
+    await expect(page.locator('[data-testid="error-message"]')).toContainText('Invalid credentials');
+  });
+
+  test('should register new user', async ({ page }) => {
+    await page.goto('/');
+    
+    await page.click('[data-testid="register-link"]');
+    
+    // Fill registration form
+    await page.fill('[data-testid="email-input"]', 'newuser@example.com');
+    await page.fill('[data-testid="password-input"]', 'StrongPassword123!');
+    await page.fill('[data-testid="full-name-input"]', 'New User');
+    await page.fill('[data-testid="practice-name-input"]', 'New Practice');
+    
+    await page.click('[data-testid="register-button"]');
+    
+    // Verify redirect to dashboard
+    await expect(page).toHaveURL('/dashboard');
+  });
+});
+"""
+
+# GitHub Actions CI/CD Pipeline
+# .github/workflows/ci.yml
+"""
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+  SECRET_KEY: test-secret-key
+  REDIS_URL: redis://localhost:6379
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-cov
+    
+    - name: Run linting
+      run: |
+        cd backend
+        pip install black isort flake8
+        black --check .
+        isort --check-only .
+        flake8 .
+    
+    - name: Run security checks
+      run: |
+        cd backend
+        pip install bandit safety
+        bandit -r . -x tests/
+        safety check
+    
+    - name: Run tests with coverage
+      run: |
+        cd backend
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: backend/coverage.xml
+        flags: backend
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Run linting
+      run: |
+        cd frontend
+        npm run lint
+    
+    - name: Run type checking
+      run: |
+        cd frontend
+        npm run type-check
+    
+    - name: Run unit tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false
+    
+    - name: Build application
+      run: |
+        cd frontend
+        npm run build
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install Playwright
+      run: |
+        cd frontend
+        npm ci
+        npx playwright install --with-deps
+    
+    - name: Start application
+      run: |
+        docker-compose up -d
+        sleep 30  # Wait for services to start
+    
+    - name: Run E2E tests
+      run: |
+        cd frontend
+        npx playwright test
+    
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: playwright-report
+        path: frontend/playwright-report/
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  load-tests:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Locust
+      run: pip install locust
+    
+    - name: Start application
+      run: |
+        docker-compose up -d
+        sleep 60  # Wait for full startup
+    
+    - name: Run load tests
+      run: |
+        cd backend/tests
+        locust -f load_test.py --headless -u 10 -r 2 -t 60s --host http://localhost:8000
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, e2e-tests]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Build and push Docker images
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ai-agent-builder
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build and push backend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG backend/
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY-backend:$IMAGE_TAG
+        
+        # Build and push frontend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG frontend/
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY-frontend:$IMAGE_TAG
+    
+    - name: Deploy to ECS
+      run: |
+        # Update ECS service with new image
+        aws ecs update-service \
+          --cluster ai-agent-builder-cluster \
+          --service ai-agent-builder-service \
+          --force-new-deployment
+"""
