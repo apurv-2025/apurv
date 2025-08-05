@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: fhir_medication_postgres
+    environment:
+      POSTGRES_DB: fhir_medication_db
+      POSTGRES_USER: medication_user
+      POSTGRES_PASSWORD: medication_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medication_user -d fhir_medication_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - medication_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fhir_medication_backend
+    environment:
+      DATABASE_URL: postgresql://medication_user:medication_password@postgres:5432/fhir_medication_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - medication_network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fhir_medication_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - medication_network
+
+volumes:
+  postgres_data:
+
+networks:
+  medication_network:
+    driver: bridge

@@ -1,0 +1,241 @@
+/* components.css - Tailwind integrated components */
+
+@layer components {
+  /* Buttons using your custom Tailwind colors */
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg font-medium text-white transition-all duration-200 inline-block text-center;
+    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
+  }
+
+  .btn-primary:hover {
+    @apply transform -translate-y-0.5;
+    box-shadow: theme('boxShadow.medium');
+  }
+
+  .btn-primary:disabled {
+    @apply opacity-60 cursor-not-allowed transform-none;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-lg font-medium 
+           transition-colors duration-200 inline-block text-center;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-gray-50;
+  }
+
+  .btn-danger {
+    @apply px-6 py-3 rounded-lg font-medium text-white transition-colors duration-200 
+           inline-block text-center;
+    background-color: theme('colors.error.600');
+  }
+
+  .btn-danger:hover {
+    background-color: theme('colors.error.700');
+  }
+
+  .btn-full {
+    @apply w-full;
+  }
+
+  .btn-link {
+    @apply bg-transparent border-none underline cursor-pointer text-sm;
+    color: theme('colors.primary.600');
+  }
+
+  .btn-link:hover {
+    color: theme('colors.primary.700');
+  }
+
+  /* Small buttons */
+  .btn-danger-small, .btn-secondary-small {
+    @apply px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 border-none;
+  }
+
+  .btn-danger-small {
+    @apply text-white;
+    background-color: theme('colors.error.600');
+  }
+
+  .btn-danger-small:hover {
+    background-color: theme('colors.error.700');
+  }
+
+  .btn-secondary-small {
+    @apply bg-gray-50 text-gray-700 border border-gray-300;
+  }
+
+  .btn-secondary-small:hover {
+    @apply bg-gray-100;
+  }
+
+  /* Form Elements */
+  .form-group {
+    @apply flex flex-col flex-1;
+  }
+
+  .form-group label {
+    @apply font-medium mb-2 text-gray-700;
+  }
+
+  .form-input {
+    @apply px-3 py-3 border border-gray-300 rounded-lg text-base transition-all duration-200;
+  }
+
+  .form-input:focus {
+    @apply outline-none border-primary-500;
+    box-shadow: 0 0 0 3px theme('colors.primary.100');
+  }
+
+  .form-select {
+    @apply px-3 py-3 border border-gray-300 rounded-lg text-base bg-white transition-all duration-200;
+  }
+
+  .form-select:focus {
+    @apply outline-none border-primary-500;
+    box-shadow: 0 0 0 3px theme('colors.primary.100');
+  }
+
+  .form-textarea {
+    @apply px-3 py-3 border border-gray-300 rounded-lg text-base font-sans resize-y transition-all duration-200;
+  }
+
+  .form-textarea:focus {
+    @apply outline-none border-primary-500;
+    box-shadow: 0 0 0 3px theme('colors.primary.100');
+  }
+
+  .form-help {
+    @apply text-sm text-gray-500 mt-1;
+  }
+
+  .form-row {
+    @apply flex gap-4;
+  }
+
+  /* Status Badges using your custom colors */
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .status-badge.verified {
+    @apply text-white;
+    background-color: theme('colors.success.600');
+  }
+
+  .status-badge.unverified {
+    @apply text-white;
+    background-color: theme('colors.warning.500');
+  }
+
+  .status-badge.active {
+    @apply text-white;
+    background-color: theme('colors.success.600');
+  }
+
+  .role-badge {
+    @apply px-3 py-1 rounded-full text-xs font-semibold uppercase;
+  }
+
+  .role-badge.role-owner {
+    background-color: theme('colors.warning.100');
+    color: theme('colors.warning.700');
+  }
+
+  .role-badge.role-admin {
+    background-color: theme('colors.primary.100');
+    color: theme('colors.primary.700');
+  }
+
+  .role-badge.role-member {
+    @apply bg-gray-100 text-gray-700;
+  }
+
+  /* Messages using your custom error/success colors */
+  .error-message {
+    @apply p-3 rounded-lg text-sm;
+    background-color: theme('colors.error.50');
+    border: 1px solid theme('colors.error.200');
+    color: theme('colors.error.700');
+  }
+
+  .success-message {
+    @apply p-3 rounded-lg text-sm;
+    background-color: theme('colors.success.50');
+    border: 1px solid theme('colors.success.200');
+    color: theme('colors.success.700');
+  }
+
+  .message {
+    @apply p-4 rounded-lg mb-4 font-medium;
+  }
+
+  .message.success {
+    background-color: theme('colors.success.50');
+    border: 1px solid theme('colors.success.200');
+    color: theme('colors.success.700');
+  }
+
+  .message.error {
+    background-color: theme('colors.error.50');
+    border: 1px solid theme('colors.error.200');
+    color: theme('colors.error.700');
+  }
+
+  /* Cards using your custom shadows */
+  .dashboard-card {
+    @apply bg-white p-6 rounded-xl border border-gray-200;
+    box-shadow: theme('boxShadow.soft');
+  }
+
+  .dashboard-card h3 {
+    @apply text-xl font-semibold text-gray-900 mb-4;
+  }
+
+  /* Progress Bar */
+  .progress-bar {
+    @apply w-full h-2 bg-gray-200 rounded-sm overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full transition-all duration-300 ease-out;
+    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
+  }
+
+  /* Toggle Switch using your primary colors */
+  .toggle {
+    @apply relative inline-block w-12 h-6;
+  }
+
+  .toggle input {
+    @apply opacity-0 w-0 h-0;
+  }
+
+  .toggle-slider {
+    @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-400 transition-all duration-300 rounded-full;
+  }
+
+  .toggle-slider:before {
+    @apply absolute content-[''] h-4 w-4 left-1 bottom-1 bg-white transition-all duration-300 rounded-full;
+  }
+
+  .toggle input:checked + .toggle-slider {
+    background-color: theme('colors.primary.500');
+  }
+
+  .toggle input:checked + .toggle-slider:before {
+    @apply transform translate-x-6;
+  }
+
+  /* Processing State */
+  .processing {
+    @apply flex items-center justify-center gap-2;
+  }
+
+  /* Spinner using your primary color */
+  .spinner {
+    @apply w-4 h-4 border-2 border-transparent rounded-full animate-spin;
+    border-top-color: theme('colors.primary.500');
+  }
+}

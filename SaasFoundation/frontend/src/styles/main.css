@@ -1,0 +1,259 @@
+/* main.css - Tailwind integrated main CSS file */
+
+/* Import Tailwind CSS base, components, and utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: theme('fontFamily.sans');
+    background-color: #f8fafc;
+    color: #334155;
+    line-height: 1.6;
+  }
+
+  .App {
+    @apply min-h-screen flex flex-col;
+  }
+
+  /* Main Content */
+  .main-content {
+    @apply flex-1 p-8 max-w-7xl mx-auto w-full;
+  }
+
+  /* Loading */
+  .loading {
+    @apply flex justify-center items-center min-h-[200px] text-lg text-gray-500;
+  }
+
+  /* Spinner Animation using your primary color */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
+
+/* Import modular styles */
+@import './components.css';
+@import './utilities.css';
+
+/* Custom component layers using Tailwind utilities */
+@layer components {
+  
+  /* Header styles with your primary gradient */
+  .header {
+    @apply text-white py-4 shadow-lg;
+    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
+  }
+
+  .header-content {
+    @apply max-w-7xl mx-auto px-8 flex justify-between items-center;
+  }
+
+  .logo h1 {
+    @apply text-2xl font-bold text-white no-underline;
+  }
+
+  .logo {
+    @apply no-underline;
+  }
+
+  .nav {
+    @apply flex items-center gap-4;
+  }
+
+  .nav-link {
+    @apply text-white no-underline px-4 py-2 rounded-lg transition-colors duration-200;
+  }
+
+  .nav-link:hover {
+    @apply bg-white bg-opacity-10;
+  }
+
+  .nav-link.btn-primary {
+    @apply bg-white bg-opacity-20 border border-white border-opacity-30;
+  }
+
+  .nav-authenticated {
+    @apply flex items-center gap-4;
+  }
+
+  .user-info {
+    @apply flex items-center gap-2;
+  }
+
+  .verification-badge {
+    @apply text-white text-xs px-2 py-1 rounded-lg;
+    background-color: theme('colors.warning.500');
+  }
+
+  .logout-btn {
+    @apply bg-transparent border border-white border-opacity-30 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200;
+  }
+
+  .logout-btn:hover {
+    @apply bg-white bg-opacity-10;
+  }
+
+  /* Settings Layout */
+  .settings-layout {
+    @apply grid gap-8;
+    grid-template-columns: 250px 1fr;
+  }
+
+  .settings-sidebar {
+    @apply bg-white rounded-xl p-4 h-fit border border-gray-200;
+    box-shadow: theme('boxShadow.soft');
+  }
+
+  .settings-nav {
+    @apply flex flex-col gap-1;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 border-none bg-transparent text-left rounded-lg cursor-pointer transition-all duration-200 text-sm font-medium text-gray-500;
+  }
+
+  .nav-item:hover {
+    @apply bg-gray-100 text-gray-700;
+  }
+
+  .nav-item.active {
+    @apply text-white;
+    background-color: theme('colors.primary.500');
+  }
+
+  .nav-icon {
+    @apply text-lg;
+  }
+
+  .settings-content {
+    @apply bg-white rounded-xl p-8 border border-gray-200;
+    box-shadow: theme('boxShadow.soft');
+  }
+
+  /* Dashboard styles */
+  .dashboard {
+    @apply max-w-7xl mx-auto p-8;
+  }
+
+  .dashboard-header {
+    @apply mb-8;
+  }
+
+  .dashboard-header h1 {
+    @apply text-4xl font-bold text-gray-900 mb-2;
+  }
+
+  .dashboard-subtitle {
+    @apply text-gray-500 text-lg;
+  }
+
+  .dashboard-grid {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  /* Auth styles */
+  .auth-container {
+    @apply flex justify-center items-center;
+    min-height: calc(100vh - 200px);
+  }
+
+  .auth-card {
+    @apply bg-white p-8 rounded-xl w-full max-w-md;
+    box-shadow: theme('boxShadow.medium');
+  }
+
+  .auth-card h2 {
+    @apply text-3xl font-bold text-center mb-2 text-gray-900;
+  }
+
+  .auth-subtitle {
+    @apply text-center text-gray-500 mb-8;
+  }
+
+  .auth-form {
+    @apply flex flex-col gap-4;
+  }
+
+  .auth-links {
+    @apply text-center mt-6;
+  }
+
+  .auth-link {
+    @apply font-medium no-underline;
+    color: theme('colors.primary.600');
+  }
+
+  .auth-link:hover {
+    @apply underline;
+  }
+
+  /* Verification styles */
+  .verification-container {
+    @apply flex justify-center items-center;
+    min-height: calc(100vh - 200px);
+  }
+
+  .verification-card {
+    @apply bg-white p-12 py-12 rounded-xl text-center max-w-lg w-full;
+    box-shadow: theme('boxShadow.medium');
+  }
+
+  .verification-icon {
+    @apply mx-auto mb-6 w-16 h-16 flex items-center justify-center rounded-full;
+  }
+
+  .verification-icon.loading {
+    @apply bg-gray-100;
+  }
+
+  .verification-icon.success {
+    background-color: theme('colors.success.100');
+    color: theme('colors.success.600');
+  }
+
+  .verification-icon.error {
+    background-color: theme('colors.error.100');
+    color: theme('colors.error.600');
+  }
+
+  .verification-card h2 {
+    @apply text-3xl font-bold mb-4 text-gray-900;
+  }
+
+  .verification-card p {
+    @apply text-gray-500 mb-4 leading-relaxed;
+  }
+
+  .verification-actions {
+    @apply flex flex-col gap-3 mt-8;
+  }
+
+  .verification-actions .btn-primary,
+  .verification-actions .btn-secondary {
+    @apply px-6 py-4;
+  }
+
+  /* Back button */
+  .back-btn {
+    @apply bg-transparent border-none cursor-pointer text-base mb-4;
+    color: theme('colors.primary.600');
+  }
+
+  .back-btn:hover {
+    @apply underline;
+  }
+}
+
+/* Import responsive styles last */
+@import './responsive.css';/* Import Tailwind CSS base, components, and utilities */

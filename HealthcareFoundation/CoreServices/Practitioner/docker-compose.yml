@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: fhir_practitioner_postgres
+    environment:
+      POSTGRES_DB: fhir_practitioner_db
+      POSTGRES_USER: practitioner_user
+      POSTGRES_PASSWORD: practitioner_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U practitioner_user -d fhir_practitioner_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - practitioner_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fhir_practitioner_backend
+    environment:
+      DATABASE_URL: postgresql://practitioner_user:practitioner_password@postgres:5432/fhir_practitioner_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - practitioner_network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fhir_practitioner_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - practitioner_network
+
+volumes:
+  postgres_data:
+
+networks:
+  practitioner_network:
+    driver: bridge

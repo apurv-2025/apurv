@@ -1,0 +1,63 @@
+# ###########################################################################################################
+# docker-compose.yml
+#
+# This file contains the docker-compose configuration for the application.
+# It uses the postgres:15 image.
+# It uses the backend:latest image.
+# It uses the frontend:latest image.
+# It uses the volumes to store the data.
+# It uses the healthcheck to check if the postgres database is running.
+# It uses the command to start the application.
+# ###########################################################################################################
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: saas_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backendsaas:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/saas_app
+      JWT_SECRET: your-secret-key-change-in-production
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: 587
+      EMAIL_USER: agenticpractice@gmail.com
+      EMAIL_PASSWORD: bqkw xphy kvek obsf
+      EMAIL_USE_TLS: True
+      EMAIL_USE_SSL: False
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+
+  frontendsaas:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
+
+volumes:
+  postgres_data:

@@ -1,0 +1,532 @@
+/* TeamManagement.css */
+
+/* Base Styles */
+.team-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: #ffffff;
+    min-height: 100vh;
+  }
+  
+  /* Header */
+  .team-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .header-info h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px 0;
+  }
+  
+  .org-info {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-primary:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+  }
+  
+  .btn-primary:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .btn-secondary-small {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-secondary-small:hover {
+    background-color: #e5e7eb;
+    border-color: #9ca3af;
+  }
+  
+  .btn-danger {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-danger:hover {
+    background-color: #b91c1c;
+  }
+  
+  .btn-danger-small {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-danger-small:hover {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+  }
+  
+  .btn-danger-small:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Messages */
+  .message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-weight: 500;
+  }
+  
+  .message.success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+  
+  .message.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+  
+  /* Tabs */
+  .team-tabs {
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 32px;
+    gap: 8px;
+  }
+  
+  .tab {
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    color: #6b7280;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .tab:hover {
+    color: #374151;
+  }
+  
+  .tab.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+  }
+  
+  /* Tab Content */
+  .tab-content {
+    animation: fadeIn 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Members Section */
+  .members-section h3,
+  .invitations-section h3,
+  .invite-section h3,
+  .org-settings-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 24px 0;
+  }
+  
+  .members-list,
+  .invitations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  /* Member Card */
+  .member-card,
+  .invitation-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+  }
+  
+  .member-card:hover,
+  .invitation-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .member-info,
+  .invitation-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+  }
+  
+  .member-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+  
+  .member-details h4,
+  .invitation-info h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 4px 0;
+  }
+  
+  .member-email {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin: 0 0 8px 0;
+  }
+  
+  .member-meta,
+  .invitation-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  /* Role Badges */
+  .role-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .role-owner {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  
+  .role-admin {
+    background-color: #ddd6fe;
+    color: #5b21b6;
+  }
+  
+  .role-member {
+    background-color: #e0e7ff;
+    color: #3730a3;
+  }
+  
+  .join-date,
+  .invite-date,
+  .expires-date {
+    color: #6b7280;
+    font-size: 0.75rem;
+  }
+  
+  /* Member Actions */
+  .member-actions,
+  .invitation-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .role-select {
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  
+  .role-select:disabled {
+    background-color: #f9fafb;
+    cursor: not-allowed;
+  }
+  
+  /* Forms */
+  .invite-form-container,
+  .org-form {
+    max-width: 600px;
+  }
+  
+  .invite-form {
+    background: #f9fafb;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    font-size: 0.875rem;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+  }
+  
+  .form-input:focus,
+  .form-select:focus,
+  .form-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .form-textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .form-help {
+    display: block;
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 4px;
+  }
+  
+  /* Invite Info */
+  .invite-info {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  
+  .invite-info h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 20px 0;
+  }
+  
+  .permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  
+  .permission-item {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+  
+  .permission-item strong {
+    display: block;
+    color: #111827;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+  }
+  
+  .permission-item ul {
+    margin: 0;
+    padding-left: 16px;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+  
+  .permission-item li {
+    margin-bottom: 4px;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: #6b7280;
+  }
+  
+  .empty-state p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+  
+  /* Organization Settings */
+  .org-form {
+    background: #f9fafb;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+  }
+  
+  /* Danger Zone */
+  .danger-zone {
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 24px;
+    background: #fef2f2;
+  }
+  
+  .danger-zone h4 {
+    color: #dc2626;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+  }
+  
+  .danger-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+  
+  .danger-info strong {
+    display: block;
+    color: #991b1b;
+    margin-bottom: 4px;
+  }
+  
+  .danger-info p {
+    color: #7f1d1d;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+  
+  /* Loading State */
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .team-container {
+      padding: 16px;
+    }
+    
+    .team-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+    }
+    
+    .team-tabs {
+      flex-wrap: wrap;
+    }
+    
+    .member-card,
+    .invitation-card {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    
+    .member-info,
+    .invitation-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    .member-actions,
+    .invitation-actions {
+      justify-content: flex-end;
+    }
+    
+    .danger-item {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    
+    .permissions-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .team-tabs {
+      flex-direction: column;
+    }
+    
+    .tab {
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      border-radius: 0;
+    }
+    
+    .tab.active {
+      border-bottom-color: #3b82f6;
+      background-color: #eff6ff;
+    }
+  }

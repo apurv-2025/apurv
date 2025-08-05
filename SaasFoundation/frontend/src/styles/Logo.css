@@ -1,0 +1,62 @@
+/* Add these to your utilities.css file for logo support */
+
+@layer utilities {
+  
+  /* Text Gradient for Logo */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent; /* Fallback for non-webkit browsers */
+  }
+
+  /* Logo Container Utilities */
+  .logo-container {
+    @apply flex justify-center items-center;
+  }
+
+  .logo-hover {
+    @apply transition-all duration-300 hover:scale-105 cursor-pointer;
+  }
+
+  /* Logo Backgrounds */
+  .logo-bg-primary {
+    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
+  }
+
+  .logo-bg-rounded {
+    @apply rounded-lg shadow-soft;
+  }
+
+  .logo-bg-circle {
+    @apply rounded-full shadow-medium;
+  }
+
+  /* Logo Animation */
+  .logo-pulse {
+    animation: logo-pulse 2s infinite;
+  }
+
+  @keyframes logo-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  /* Responsive Logo Sizes */
+  .logo-responsive {
+    @apply h-8 w-auto sm:h-10 md:h-12 lg:h-14 xl:h-16;
+  }
+
+  /* Logo with Brand Colors */
+  .logo-brand-shadow {
+    filter: drop-shadow(0 4px 8px theme('colors.primary.200'));
+  }
+
+}

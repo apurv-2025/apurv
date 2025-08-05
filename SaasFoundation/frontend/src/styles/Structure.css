@@ -1,0 +1,116 @@
+# Modular CSS File Structure
+
+## 📁 Recommended Folder Structure
+
+```
+src/
+├── styles/
+│   ├── main.css              # Main import file
+│   ├── base.css              # Global styles & resets
+│   ├── components.css        # Reusable components
+│   ├── header.css            # Header & navigation
+│   ├── sidebar.css           # Sidebar navigation
+│   ├── auth.css              # Authentication pages
+│   ├── dashboard.css         # Dashboard layout
+│   ├── settings.css          # Settings pages
+│   └── responsive.css        # Media queries
+└── App.js
+```
+
+## 🎯 File Breakdown
+
+### **base.css** (Foundation)
+- Global resets (`* { margin: 0; padding: 0; }`)
+- Body & App container styles
+- Loading states & spinners
+- Typography basics
+
+### **components.css** (Reusable Elements)
+- Buttons (`.btn-primary`, `.btn-secondary`, etc.)
+- Form elements (`.form-input`, `.form-select`)
+- Badges & status indicators
+- Cards & containers
+- Progress bars & toggles
+
+### **header.css** (Top Navigation)
+- Header layout & gradient
+- Navigation links & user info
+- Logout button
+- Logo styling
+
+### **sidebar.css** (Side Navigation)
+- Settings sidebar layout
+- Navigation items & active states
+- Back button
+- Content layout grid
+
+### **auth.css** (Authentication)
+- Login & signup forms
+- Email verification pages
+- Team invitation pages
+- Auth containers & cards
+
+### **dashboard.css** (Main Dashboard)
+- Dashboard grid layout
+- Status cards & metrics
+- Activity feeds
+- Subscription info displays
+
+### **settings.css** (Settings Pages)
+- Settings layout & navigation
+- Profile sections
+- Security settings
+- Account management
+
+### **responsive.css** (Mobile Support)
+- Tablet styles (`@media (max-width: 768px)`)
+- Mobile styles (`@media (max-width: 480px)`)
+- Responsive grid adjustments
+
+## 🚀 Implementation Steps
+
+### 1. **Create the folder structure**
+```bash
+mkdir src/styles
+```
+
+### 2. **Create individual CSS files**
+Copy the content from each artifact into the respective files.
+
+### 3. **Update your main App.js**
+```javascript
+// Replace this:
+import './App.css';
+
+// With this:
+import './styles/main.css';
+```
+
+### 4. **Delete the old App.css**
+```bash
+rm src/App.css
+```
+
+## ✅ Benefits of This Structure
+
+- **Maintainable**: Easy to find and edit specific styles
+- **Scalable**: Add new features without bloating existing files
+- **Collaborative**: Multiple developers can work on different sections
+- **Performance**: Better caching and smaller file sizes
+- **Organized**: Logical separation of concerns
+
+## 📝 Usage Tips
+
+- **Import order matters**: Base styles first, components second, layout third, responsive last
+- **Use consistent naming**: Follow BEM or similar naming conventions
+- **Keep files focused**: Each file should have a single responsibility
+- **Comment sections**: Add comments to explain complex styles
+- **Regular cleanup**: Remove unused styles periodically
+
+## 🔄 Migration Strategy
+
+1. Start with `base.css` and `components.css`
+2. Move page-specific styles to their respective files
+3. Extract responsive styles to `responsive.css`
+4. Test thoroughly after each migration
+5. Remove the original `App.css` when complete

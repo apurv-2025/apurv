@@ -1,0 +1,234 @@
+/* utilities.css - Custom utility classes that extend Tailwind */
+
+@layer utilities {
+  
+  /* Custom Gradient Utilities */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
+  }
+  
+  .bg-gradient-success {
+    background: linear-gradient(135deg, theme('colors.success.400'), theme('colors.success.600'));
+  }
+  
+  .bg-gradient-warning {
+    background: linear-gradient(135deg, theme('colors.warning.400'), theme('colors.warning.600'));
+  }
+  
+  .bg-gradient-error {
+    background: linear-gradient(135deg, theme('colors.error.400'), theme('colors.error.600'));
+  }
+
+  /* Custom Text Gradients */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, theme('colors.primary.500'), theme('colors.primary.700'));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Custom Shadow Utilities (using your config) */
+  .shadow-soft {
+    box-shadow: theme('boxShadow.soft');
+  }
+  
+  .shadow-medium {
+    box-shadow: theme('boxShadow.medium');
+  }
+  
+  .shadow-strong {
+    box-shadow: theme('boxShadow.strong');
+  }
+
+  /* Animation Utilities */
+  .animate-fade-in {
+    animation: theme('animation.fade-in');
+  }
+  
+  .animate-slide-in {
+    animation: theme('animation.slide-in');
+  }
+  
+  .animate-bounce-slow {
+    animation: theme('animation.bounce-slow');
+  }
+
+  /* Custom Spacing for Sidebar Padding (Answering your original question!) */
+  .sidebar-padding-tight {
+    @apply p-2; /* 8px - very tight */
+  }
+  
+  .sidebar-padding-normal {
+    @apply p-3; /* 12px - normal */
+  }
+  
+  .sidebar-padding-loose {
+    @apply p-4; /* 16px - current default */
+  }
+
+  /* Navigation Item Padding Variations */
+  .nav-item-tight {
+    @apply px-2 py-1.5; /* Reduced padding for nav items */
+  }
+  
+  .nav-item-normal {
+    @apply px-3 py-2; /* Normal padding */
+  }
+  
+  .nav-item-loose {
+    @apply px-4 py-3; /* Current default */
+  }
+
+  /* Custom Border Utilities */
+  .border-primary {
+    border-color: theme('colors.primary.300');
+  }
+  
+  .border-success {
+    border-color: theme('colors.success.300');
+  }
+  
+  .border-warning {
+    border-color: theme('colors.warning.300');
+  }
+  
+  .border-error {
+    border-color: theme('colors.error.300');
+  }
+
+  /* Focus Ring Utilities using your colors */
+  .focus-ring-primary {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: theme('colors.primary.500');
+  }
+  
+  .focus-ring-success {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: theme('colors.success.500');
+  }
+  
+  .focus-ring-error {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: theme('colors.error.500');
+  }
+
+  /* Status Color Utilities */
+  .text-status-active {
+    color: theme('colors.success.600');
+  }
+  
+  .text-status-inactive {
+    color: theme('colors.gray.500');
+  }
+  
+  .text-status-warning {
+    color: theme('colors.warning.600');
+  }
+  
+  .text-status-error {
+    color: theme('colors.error.600');
+  }
+
+  .bg-status-active {
+    background-color: theme('colors.success.50');
+  }
+  
+  .bg-status-inactive {
+    background-color: theme('colors.gray.50');
+  }
+  
+  .bg-status-warning {
+    background-color: theme('colors.warning.50');
+  }
+  
+  .bg-status-error {
+    background-color: theme('colors.error.50');
+  }
+
+  /* Custom Layout Utilities */
+  .sidebar-width {
+    width: theme('spacing.72'); /* 18rem from your config */
+  }
+  
+  .content-max-width {
+    max-width: theme('spacing.96'); /* 24rem from your config */
+  }
+
+  /* Glassmorphism Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Hover Utilities */
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+  
+  .hover-lift:hover {
+    @apply transform -translate-y-1;
+  }
+
+  /* Custom Grid Utilities */
+  .grid-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: theme('spacing.6');
+  }
+  
+  .grid-settings {
+    display: grid;
+    grid-template-columns: theme('spacing.64') 1fr;
+    gap: theme('spacing.8');
+  }
+
+  /* Responsive Typography */
+  .text-responsive-xl {
+    @apply text-2xl;
+  }
+  
+  @media (min-width: 768px) {
+    .text-responsive-xl {
+      @apply text-3xl;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .text-responsive-xl {
+      @apply text-4xl;
+    }
+  }
+
+  /* Custom Scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.400') theme('colors.gray.100');
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: theme('colors.gray.100');
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.gray.400');
+    border-radius: 3px;
+  }
+
+  /* Print Utilities */
+  .print-hidden {
+    @media print {
+      display: none !important;
+    }
+  }
+  
+  .print-visible {
+    @media print {
+      display: block !important;
+    }
+  }
+}
