@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Activity, Calendar, Pill, TestTube, Mail, User, Settings, LogOut } from 'lucide-react';
+import { Heart, Activity, Calendar, Pill, TestTube, Mail, User, Settings, LogOut, Bot } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
   const menuItems = [
@@ -8,6 +8,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'medications', label: 'Medications', icon: Pill },
     { id: 'lab-results', label: 'Lab Results', icon: TestTube },
     { id: 'messages', label: 'Messages', icon: Mail },
+    { id: 'agent', label: 'AI Assistant', icon: Bot },
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];

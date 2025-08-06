@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from . import models
 from .config import settings
-from .routers import auth, users, appointments, medications, lab_results, messages
+from .routers import auth, users, appointments, medications, lab_results, messages, agent
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -26,6 +26,7 @@ app.include_router(appointments.router)
 app.include_router(medications.router)
 app.include_router(lab_results.router)
 app.include_router(messages.router)
+app.include_router(agent.router, prefix="/agent", tags=["AI Agent"])
 
 @app.get("/")
 def read_root():

@@ -7,6 +7,7 @@ import Medications from './Medications';
 import LabResults from './LabResults';
 import Messages from './Messages';
 import Profile from './Profile';
+import Agent from './Agent';
 import { useAuth } from '../contexts/AuthContext';
 
 const PatientPortal = () => {
@@ -29,6 +30,8 @@ const PatientPortal = () => {
         return <LabResults />;
       case 'messages':
         return <Messages />;
+      case 'agent':
+        return <Agent />;
       case 'profile':
         return <Profile />;
       default:
