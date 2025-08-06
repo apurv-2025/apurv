@@ -1,6 +1,6 @@
 // src/components/auth/RegisterForm.jsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -21,6 +21,7 @@ const RegisterForm = () => {
   const [success, setSuccess] = useState('');
   
   const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -72,6 +73,11 @@ const RegisterForm = () => {
         first_name: '',
         last_name: ''
       });
+      
+      // Redirect to email verification page after 2 seconds
+      setTimeout(() => {
+        navigate(`/verify?email=${encodeURIComponent(formData.email)}`);
+      }, 2000);
     } else {
       setError(result.error);
     }

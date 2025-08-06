@@ -85,6 +85,13 @@ class AuthService:
                 detail="Account is deactivated"
             )
         
+        # Check if email is verified
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Please verify your email address before logging in. Check your inbox for a verification link."
+            )
+        
         access_token = create_access_token(data={"sub": str(user.id)})
         
         return {
@@ -140,7 +147,10 @@ class AuthService:
         db.delete(token_record)
         db.commit()
         
-        return {"message": "Email verified successfully"}
+        return {
+            "message": "Email verified successfully! You can now log in to your account.",
+            "redirect_to": "login"
+        }
 
     def resend_verification(self, current_user: User, db: Session) -> dict:
         """Resend email verification"""

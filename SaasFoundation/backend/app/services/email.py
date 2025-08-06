@@ -43,18 +43,56 @@ class EmailService:
         """Send verification email to user"""
         verification_link = f"http://localhost:3000/verify?token={token}"
         body = f"""
+        <!DOCTYPE html>
         <html>
-            <body>
-                <h2>Welcome to Agentic Practice</h2>
-                <p>Please click the link below to verify your email address:</p>
-                <a href="{verification_link}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
-                <p>Or copy and paste this link: {verification_link}</p>
-                <p>This link will expire in 24 hours.</p>
-            </body>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Verify Your Email</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Agentic Practice!</h1>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <p style="font-size: 16px; margin-bottom: 20px;">Hello,</p>
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                    Thank you for creating your account! To complete your registration and activate your account, 
+                    please verify your email address by clicking the button below:
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{verification_link}" 
+                       style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; 
+                              border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;
+                              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        Verify Email Address
+                    </a>
+                </div>
+                
+                <p style="font-size: 14px; color: #666; margin-top: 20px;">
+                    <strong>This verification link will expire in 24 hours.</strong>
+                </p>
+                
+                <p style="font-size: 14px; color: #666; margin-top: 20px;">
+                    After verifying your email, you'll be able to log in to your account and access all features.
+                </p>
+            </div>
+            
+            <div style="text-align: center; color: #666; font-size: 12px;">
+                <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                <p style="word-break: break-all;">{verification_link}</p>
+            </div>
+            
+            <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
+                <p>If you didn't create an account with us, please ignore this email.</p>
+            </div>
+        </body>
         </html>
         """
         
-        return self._send_email(email, "Verify Your Account", body)
+        return self._send_email(email, "Verify Your Email - Agentic Practice", body)
 
     def send_invitation_email(self, invitation: Invitation, organization: Organization, inviter: User) -> bool:
         """Send invitation email to user"""

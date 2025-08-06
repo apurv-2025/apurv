@@ -48,9 +48,9 @@ const EmailVerification = () => {
       setStatus('success');
       setMessage('Your email has been verified successfully!');
       
-      // Redirect to dashboard after 3 seconds
+      // Redirect to login after 3 seconds
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/login');
       }, 3000);
     } catch (error) {
       setStatus('error');
@@ -117,10 +117,10 @@ const EmailVerification = () => {
               Email Verified Successfully!
             </h2>
             <p className="text-gray-600 mb-6">
-              Your email address has been verified. You'll be redirected to your dashboard shortly.
+              Your email address has been verified. You'll be redirected to the login page shortly.
             </p>
-            <Button onClick={() => navigate('/dashboard')}>
-              Go to Dashboard
+            <Button onClick={() => navigate('/login')}>
+              Go to Login
             </Button>
           </div>
         );
