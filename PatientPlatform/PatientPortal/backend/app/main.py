@@ -1,0 +1,36 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from .database import engine
+from . import models
+from .config import settings
+from .routers import auth, users, appointments, medications, lab_results, messages
+
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Healthcare Patient Portal API", version="1.0.0")
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(appointments.router)
+app.include_router(medications.router)
+app.include_router(lab_results.router)
+app.include_router(messages.router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Healthcare Patient Portal API"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
