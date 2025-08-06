@@ -195,8 +195,8 @@ class Notification(Base):
     """Notification model"""
     __tablename__ = "notifications"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
     type = Column(String(50), nullable=False, default="info")  # success, warning, error, info
@@ -220,8 +220,8 @@ class NotificationPreference(Base):
     """User notification preferences"""
     __tablename__ = "notification_preferences"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
     email = Column(Boolean, default=True, nullable=False)
     push = Column(Boolean, default=True, nullable=False)
     sms = Column(Boolean, default=False, nullable=False)
