@@ -92,7 +92,7 @@ const RegisterForm = () => {
         {/* Logo Section */}
         <div className="text-center mb-8">
           <Logo size="large" className="mb-2" />
-          <p className="text-gray-600 text-sm">Start your journey with us</p>
+          <p className="text-gray-600 text-sm">AI-Native Practice Management – Smarter Workflow, Less Busywork</p>
         </div>
         
         <Card className="w-full">
