@@ -57,7 +57,10 @@ export const teamService = {
   },
 
   acceptInvitation: async (token) => {
+    console.log('teamService.acceptInvitation called with token:', token);
+    console.log('API endpoint:', API_ENDPOINTS.INVITATIONS.ACCEPT(token));
     const response = await api.post(API_ENDPOINTS.INVITATIONS.ACCEPT(token));
+    console.log('teamService.acceptInvitation response:', response);
     return response.data;
   }
 };

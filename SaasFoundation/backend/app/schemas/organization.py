@@ -84,6 +84,10 @@ class InvitationResponse(BaseModel):
     token: str
     expires_at:datetime
     status:str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
 
 
 class InvitationDetailsResponse(BaseModel):

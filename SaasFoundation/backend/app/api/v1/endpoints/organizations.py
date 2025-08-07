@@ -196,13 +196,14 @@ async def invite_user(
     email_service.send_invitation_email(invitation, organization, current_user)
     
     invitationResponse = InvitationResponse(
-        id=organization.id,
+        id=invitation.id,
         email=invitation_data.email,
         role=invitation_data.role,
         invited_by=current_user.id,
         token=invitation_token,
-        expires_at=utcnow() + timedelta(days=7),
-        status="pending")
+        expires_at=invitation.expires_at,
+        status="pending",
+        created_at=invitation.created_at)
 
     return invitationResponse
 

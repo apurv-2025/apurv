@@ -12,12 +12,9 @@ const Settings = () => {
   
   // Profile form state
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    company: user?.company || '',
-    jobTitle: user?.jobTitle || ''
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
+    email: user?.email || ''
   });
 
   // Password form state
@@ -29,11 +26,11 @@ const Settings = () => {
 
   // Notification preferences
   const [notifications, setNotifications] = useState({
-    emailNotifications: user?.preferences?.emailNotifications ?? true,
-    pushNotifications: user?.preferences?.pushNotifications ?? false,
-    weeklyReports: user?.preferences?.weeklyReports ?? true,
-    securityAlerts: user?.preferences?.securityAlerts ?? true,
-    marketingEmails: user?.preferences?.marketingEmails ?? false
+    email_notifications: true,
+    marketing_emails: false,
+    security_alerts: true,
+    product_updates: true,
+    billing_notifications: true
   });
 
   // Update profile data when user changes
@@ -41,30 +38,25 @@ const Settings = () => {
     console.log('User data received:', user);
     if (user) {
       console.log('Setting profile data with:', {
-        firstName: user.firstName || 'MISSING',
-        lastName: user.lastName || 'MISSING',
-        email: user.email || 'MISSING',
-        phone: user.phone || 'MISSING',
-        company: user.company || 'MISSING',
-        jobTitle: user.jobTitle || 'MISSING'
+        first_name: user.first_name || 'MISSING',
+        last_name: user.last_name || 'MISSING',
+        email: user.email || 'MISSING'
       });
 
       setProfileData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        company: user.company || '',
-        jobTitle: user.jobTitle || ''
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.email || ''
       });
       
       
+      // Load preferences from backend (for now using defaults)
       setNotifications({
-        emailNotifications: user.preferences?.emailNotifications ?? true,
-        pushNotifications: user.preferences?.pushNotifications ?? false,
-        weeklyReports: user.preferences?.weeklyReports ?? true,
-        securityAlerts: user.preferences?.securityAlerts ?? true,
-        marketingEmails: user.preferences?.marketingEmails ?? false
+        email_notifications: true,
+        marketing_emails: false,
+        security_alerts: true,
+        product_updates: true,
+        billing_notifications: true
       });
     }
   }, [user]);
@@ -160,13 +152,19 @@ const Settings = () => {
     setNotifications(prev => ({ ...prev, [key]: value }));
 
     try {
-      // Fixed: Actually make API call to update notification preferences
-      await updateProfile({ 
-        preferences: { 
-          ...notifications, 
-          [key]: value 
-        } 
+      // Make API call to update notification preferences
+      const response = await fetch('/api/v1/user/preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({ [key]: value })
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update preferences');
+      }
     } catch (error) {
       console.error('Notification update error:', error);
       // Revert on error
@@ -185,25 +183,25 @@ const Settings = () => {
           <form onSubmit={handleProfileUpdate} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
                   First Name
                 </label>
                 <Input
-                  id="firstName"
-                  value={profileData.firstName}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, firstName: e.target.value }))}
+                  id="first_name"
+                  value={profileData.first_name}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, first_name: e.target.value }))}
                   required
                   disabled={loading}
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
                   Last Name
                 </label>
                 <Input
-                  id="lastName"
-                  value={profileData.lastName}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, lastName: e.target.value }))}
+                  id="last_name"
+                  value={profileData.last_name}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, last_name: e.target.value }))}
                   required
                   disabled={loading}
                 />
@@ -218,40 +216,6 @@ const Settings = () => {
                   value={profileData.email}
                   onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                   required
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={profileData.phone}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
-                  Company
-                </label>
-                <Input
-                  id="company"
-                  value={profileData.company}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, company: e.target.value }))}
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700 mb-1">
-                  Job Title
-                </label>
-                <Input
-                  id="jobTitle"
-                  value={profileData.jobTitle}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, jobTitle: e.target.value }))}
                   disabled={loading}
                 />
               </div>
@@ -379,22 +343,22 @@ const Settings = () => {
   // Fixed: Better labeling for notification types
   const getNotificationLabel = (key) => {
     const labels = {
-      emailNotifications: 'Email Notifications',
-      pushNotifications: 'Push Notifications',
-      weeklyReports: 'Weekly Reports',
-      securityAlerts: 'Security Alerts',
-      marketingEmails: 'Marketing Emails'
+      email_notifications: 'Email Notifications',
+      marketing_emails: 'Marketing Emails',
+      security_alerts: 'Security Alerts',
+      product_updates: 'Product Updates',
+      billing_notifications: 'Billing Notifications'
     };
     return labels[key] || key;
   };
 
   const getNotificationDescription = (key) => {
     const descriptions = {
-      emailNotifications: 'Receive email notifications for important updates',
-      pushNotifications: 'Get push notifications on your devices',
-      weeklyReports: 'Receive weekly summary reports',
-      securityAlerts: 'Get notified about security-related activities',
-      marketingEmails: 'Receive product updates and marketing content'
+      email_notifications: 'Receive email notifications for important updates',
+      marketing_emails: 'Receive product updates and marketing content',
+      security_alerts: 'Get notified about security-related activities',
+      product_updates: 'Receive notifications about new features and updates',
+      billing_notifications: 'Get notified about billing and subscription changes'
     };
     return descriptions[key] || '';
   };

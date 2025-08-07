@@ -49,8 +49,8 @@ export const API_ENDPOINTS = {
     UPDATE: '/api/v1/organizations/current'
   },
   INVITATIONS: {
-    DETAILS: (token) => `/api/v1/invitations/${token}`,
-    ACCEPT: (token) => `/api/v1/invitations/${token}/accept`,
+    DETAILS: (token) => `/api/v1/organizations/invitations/${token}`,
+    ACCEPT: (token) => `/api/v1/organizations/invitations/${token}/accept`,
     RESEND: (id) => `/api/v1/organizations/current/invitations/${id}/resend`,
     CANCEL: (id) => `/api/v1/organizations/current/invitations/${id}`
   },

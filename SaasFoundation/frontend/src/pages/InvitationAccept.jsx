@@ -4,6 +4,8 @@ import { Card, Button, Input, Badge } from '../components/ui';
 import { SuccessMessage, ErrorMessage, LoadingState } from '../components/common';
 import { useAuth } from '../hooks/useAuth';
 import { API_ENDPOINTS } from '../utils/constants';
+import { teamService } from '../services/team';
+import api from '../services/api';
 
 const InvitationAccept = () => {
   const navigate = useNavigate();
@@ -18,14 +20,26 @@ const InvitationAccept = () => {
 
   // Registration form state
   const [registrationData, setRegistrationData] = useState({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     password: '',
     confirmPassword: ''
   });
 
   const token = searchParams.get('token');
   const inviteId = searchParams.get('invite');
+
+  // Helper function to get verification token from backend
+  const getVerificationToken = async (email) => {
+    try {
+      // This would need a backend endpoint to get the verification token
+      // For now, we'll skip automatic verification and handle it differently
+      return null;
+    } catch (error) {
+      console.error('Error getting verification token:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (token || inviteId) {
@@ -40,31 +54,23 @@ const InvitationAccept = () => {
     try {
       setStatus('loading');
       
-      // Mock API call to validate invitation
-      const response = await fetch(`/api/v1/invitations/validate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, inviteId })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to validate invitation');
-      }
-      
-      const invitationData = await response.json();
+      // Use the teamService to get invitation details
+      const invitationData = await teamService.getInvitationDetails(token);
       setInvitation(invitationData);
       
-      if (invitationData.expired) {
+      // Check if invitation is expired
+      const expiresAt = new Date(invitationData.expires_at);
+      if (expiresAt < new Date()) {
         setStatus('expired');
         setMessage('This invitation has expired. Please contact the team administrator for a new invitation.');
-      } else if (invitationData.accepted) {
+      } else if (invitationData.status === 'accepted') {
         setStatus('accepted');
         setMessage('This invitation has already been accepted.');
       } else {
         setStatus('valid');
         
         // Check if user exists or needs to register
-        if (!user && !invitationData.userExists) {
+        if (!user && !invitationData.user_exists) {
           setShowRegistration(true);
           setRegistrationData(prev => ({
             ...prev,
@@ -73,6 +79,7 @@ const InvitationAccept = () => {
         }
       }
     } catch (error) {
+      console.error('Invitation validation error:', error);
       setStatus('error');
       setMessage('Failed to validate invitation. Please try again or contact support.');
     }
@@ -83,7 +90,8 @@ const InvitationAccept = () => {
       setAccepting(true);
       setMessage('');
       
-      await acceptInvitation({ token, inviteId });
+      // Use the teamService to accept invitation
+      await teamService.acceptInvitation(token);
       
       setStatus('success');
       setMessage('Successfully joined the team! Redirecting to dashboard...');
@@ -92,7 +100,8 @@ const InvitationAccept = () => {
         navigate('/dashboard');
       }, 2000);
     } catch (error) {
-      setMessage('Failed to accept invitation. Please try again.');
+      console.error('Accept invitation error:', error);
+      setMessage(error.message || 'Failed to accept invitation. Please try again.');
     } finally {
       setAccepting(false);
     }
@@ -110,21 +119,57 @@ const InvitationAccept = () => {
       setAccepting(true);
       setMessage('');
       
-      // Register user and accept invitation in one step
-      await register({
+      // First register the user
+      const registerResponse = await api.post(API_ENDPOINTS.AUTH.REGISTER, {
         ...registrationData,
-        email: invitation.email,
-        acceptInvitation: { token, inviteId }
+        email: invitation.email
       });
       
-      setStatus('success');
-      setMessage('Account created and team invitation accepted! Redirecting to dashboard...');
+      // Then try to login the user to get access token
+      let loginResponse;
+      try {
+        loginResponse = await api.post(API_ENDPOINTS.AUTH.LOGIN, {
+          email: invitation.email,
+          password: registrationData.password
+        });
+        
+        // Set the auth token for subsequent requests
+        api.setAuthToken(loginResponse.data.access_token);
+      } catch (loginError) {
+        // If login fails due to email verification, redirect to verification page
+        if (loginError.message.includes('verify your email')) {
+          setMessage('Account created successfully! Please check your email and verify your account before accepting the invitation.');
+          setTimeout(() => {
+            navigate(`/verify?email=${encodeURIComponent(invitation.email)}`);
+          }, 3000);
+          return;
+        }
+        throw loginError;
+      }
+      
+      // Then accept the invitation
+      try {
+        console.log('Accepting invitation with token:', token);
+        const acceptResponse = await teamService.acceptInvitation(token);
+        console.log('Invitation acceptance response:', acceptResponse);
+        
+        setStatus('success');
+        setMessage('Account created and team invitation accepted! Redirecting to dashboard...');
+      } catch (acceptError) {
+        console.error('Invitation acceptance error:', acceptError);
+        setMessage(`Account created successfully, but failed to accept invitation: ${acceptError.message}. Please try logging in and accepting the invitation manually.`);
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+        return;
+      }
       
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
     } catch (error) {
-      setMessage('Failed to create account or accept invitation. Please try again.');
+      console.error('Registration and accept error:', error);
+      setMessage(error.message || 'Failed to create account or accept invitation. Please try again.');
     } finally {
       setAccepting(false);
     }
@@ -187,11 +232,11 @@ const InvitationAccept = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Team:</span>
-                    <span className="font-medium">{invitation?.teamName}</span>
+                    <span className="font-medium">{invitation?.organization?.name}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Invited by:</span>
-                    <span className="font-medium">{invitation?.inviterName}</span>
+                    <span className="font-medium">{invitation?.invited_by?.first_name} {invitation?.invited_by?.last_name}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Role:</span>
@@ -220,55 +265,80 @@ const InvitationAccept = () => {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name
+                    </label>
+                    <Input
+                      id="first_name"
+                      value={registrationData.first_name}
+                      onChange={(e) => setRegistrationData(prev => ({
+                        ...prev,
+                        first_name: e.target.value
+                      }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name
+                    </label>
+                    <Input
+                      id="last_name"
+                      value={registrationData.last_name}
+                      onChange={(e) => setRegistrationData(prev => ({
+                        ...prev,
+                        last_name: e.target.value
+                      }))}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
                   <Input
-                    label="First Name"
-                    value={registrationData.firstName}
-                    onChange={(e) => setRegistrationData(prev => ({
-                      ...prev,
-                      firstName: e.target.value
-                    }))}
-                    required
+                    id="email"
+                    type="email"
+                    value={invitation?.email}
+                    disabled
+                    className="bg-gray-50"
                   />
+                </div>
+                
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
                   <Input
-                    label="Last Name"
-                    value={registrationData.lastName}
+                    id="password"
+                    type="password"
+                    value={registrationData.password}
                     onChange={(e) => setRegistrationData(prev => ({
                       ...prev,
-                      lastName: e.target.value
+                      password: e.target.value
                     }))}
                     required
                   />
                 </div>
                 
-                <Input
-                  label="Email"
-                  type="email"
-                  value={invitation?.email}
-                  disabled
-                  className="bg-gray-50"
-                />
-                
-                <Input
-                  label="Password"
-                  type="password"
-                  value={registrationData.password}
-                  onChange={(e) => setRegistrationData(prev => ({
-                    ...prev,
-                    password: e.target.value
-                  }))}
-                  required
-                />
-                
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  value={registrationData.confirmPassword}
-                  onChange={(e) => setRegistrationData(prev => ({
-                    ...prev,
-                    confirmPassword: e.target.value
-                  }))}
-                  required
-                />
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={registrationData.confirmPassword}
+                    onChange={(e) => setRegistrationData(prev => ({
+                      ...prev,
+                      confirmPassword: e.target.value
+                    }))}
+                    required
+                  />
+                </div>
                 
                 <Button
                   type="submit"
@@ -394,7 +464,7 @@ const InvitationAccept = () => {
             </h2>
             
             <p className="text-gray-600 mb-6">
-              You've successfully joined <strong>{invitation?.teamName}</strong>. 
+              You've successfully joined <strong>{invitation?.organization?.name}</strong>. 
               You'll be redirected to your dashboard shortly.
             </p>
             
