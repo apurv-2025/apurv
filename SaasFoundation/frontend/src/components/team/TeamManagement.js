@@ -3,6 +3,7 @@ import { layout } from '../../components/layout';
 import { Card, Button, Badge, Modal } from '../../components/ui';
 import { MemberCard, InvitationCard, InviteForm } from '../../components/team';
 import RoleSelect from './RoleSelect';
+import RoleHelpModal from './RoleHelpModal';
 import { EmptyState, EmptyStates, SuccessMessage, ErrorMessage } from '../../components/common';
 
 import '../../styles/pages/teammanagement.css';  
@@ -28,6 +29,9 @@ function TeamManagement() {
     email: '',
     role: 'member'
   });
+  
+  // Help modal state
+  const [showRoleHelp, setShowRoleHelp] = useState(false);
   
   // Organization form state
   const [orgForm, setOrgForm] = useState({
@@ -275,13 +279,23 @@ function TeamManagement() {
                   
                   {canManageMembers && member.user.id !== user.id && (
                     <div className="member-actions">
-                      <RoleSelect
-                        value={member.role}
-                        onChange={(e) => handleUpdateMemberRole(member.id, e.target.value)}
-                        currentUserRole={currentUserRole}
-                        disabled={member.role === 'owner'}
-                        size="sm"
-                      />
+                      <div className="flex items-center space-x-2">
+                        <RoleSelect
+                          value={member.role}
+                          onChange={(e) => handleUpdateMemberRole(member.id, e.target.value)}
+                          currentUserRole={currentUserRole}
+                          disabled={member.role === 'owner'}
+                          size="sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowRoleHelp(true)}
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                          title="View Role Guide"
+                        >
+                          📋
+                        </button>
+                      </div>
                       <button
                         onClick={() => handleRemoveMember(member.id)}
                         className="btn-danger-small"
@@ -366,7 +380,17 @@ function TeamManagement() {
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="role">Role</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label htmlFor="role">Role</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowRoleHelp(true)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1"
+                    >
+                      <span>📋</span>
+                      <span>View Role Guide</span>
+                    </button>
+                  </div>
                   <RoleSelect
                     value={inviteForm.role}
                     onChange={(e) => setInviteForm(prev => ({
@@ -483,6 +507,12 @@ function TeamManagement() {
           </div>
         )}
       </div>
+      
+      {/* Role Help Modal */}
+      <RoleHelpModal
+        isOpen={showRoleHelp}
+        onClose={() => setShowRoleHelp(false)}
+      />
     </div>
   );
 }
