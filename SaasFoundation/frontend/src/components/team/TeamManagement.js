@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { layout } from '../../components/layout';
 import { Card, Button, Badge, Modal } from '../../components/ui';
 import { MemberCard, InvitationCard, InviteForm } from '../../components/team';
+import RoleSelect from './RoleSelect';
 import { EmptyState, EmptyStates, SuccessMessage, ErrorMessage } from '../../components/common';
 
 import '../../styles/pages/teammanagement.css';  
@@ -274,18 +275,13 @@ function TeamManagement() {
                   
                   {canManageMembers && member.user.id !== user.id && (
                     <div className="member-actions">
-                      <select
+                      <RoleSelect
                         value={member.role}
                         onChange={(e) => handleUpdateMemberRole(member.id, e.target.value)}
-                        className="role-select"
+                        currentUserRole={currentUserRole}
                         disabled={member.role === 'owner'}
-                      >
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
-                        {currentUserRole === 'owner' && (
-                          <option value="owner">Owner</option>
-                        )}
-                      </select>
+                        size="sm"
+                      />
                       <button
                         onClick={() => handleRemoveMember(member.id)}
                         className="btn-danger-small"
@@ -371,23 +367,17 @@ function TeamManagement() {
                 
                 <div className="form-group">
                   <label htmlFor="role">Role</label>
-                  <select
-                    id="role"
+                  <RoleSelect
                     value={inviteForm.role}
                     onChange={(e) => setInviteForm(prev => ({
                       ...prev,
                       role: e.target.value
                     }))}
-                    className="form-select"
-                  >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                    {currentUserRole === 'owner' && (
-                      <option value="owner">Owner</option>
-                    )}
-                  </select>
+                    currentUserRole={currentUserRole}
+                    includeDescriptions={true}
+                  />
                   <small className="form-help">
-                    Members can view and use the platform. Admins can manage team members and settings.
+                    Select the appropriate role for this team member based on their responsibilities.
                   </small>
                 </div>
                 
