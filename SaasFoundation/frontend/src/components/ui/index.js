@@ -10,6 +10,7 @@ export { default as Textarea } from './Textarea';
 export { Alert, AlertTitle, AlertDescription } from './Alert';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { default as Progress } from './Progress';
+export { default as Logo } from './Logo';
 export { 
   default as Modal, 
   ModalHeader, 
@@ -31,4 +32,5 @@ export * from './Textarea';
 export * from './Alert';
 export * from './Tabs';
 export * from './Progress';
+export * from './Logo';
 export * from './Modal';

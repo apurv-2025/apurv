@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import ErrorMessage from '../common/ErrorMessage';
+import Logo from '../ui/Logo';
 
 
 
@@ -44,13 +45,18 @@ const LoginForm = () => {
   };
 
   return (
-    
-    <div className="flex justify-center items-center min-h-[600px]">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-          <CardDescription>Welcome back! Please sign in to your account.</CardDescription>
-        </CardHeader>
+    <div className="flex justify-center items-center min-h-screen bg-gray-50">
+      <div className="w-full max-w-md">
+        {/* Logo Section */}
+        <div className="text-center mb-8">
+          <Logo size="large" className="mb-2" />
+          <p className="text-gray-600 text-sm">It's great to see you again</p>
+        </div>
+        
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+          </CardHeader>
         
         <CardContent>
           <ErrorMessage message={error} onDismiss={() => setError('')} />
@@ -110,7 +116,22 @@ const LoginForm = () => {
             </p>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+        
+        {/* Additional Links */}
+        <div className="text-center mt-6">
+          <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+            Can't sign in? Get Help
+          </Link>
+        </div>
+        
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <p className="text-xs text-gray-500">
+            © 2025 Agentic Practice | Terms | Privacy
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
