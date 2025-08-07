@@ -29,6 +29,7 @@ export const PAYERS = [
 export const NAVIGATION_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'Activity' },
   { id: 'claims', label: 'Claims', icon: 'FileText' },
+  { id: 'work-queue', label: 'Work Queue', icon: 'List' },
   { id: 'upload', label: 'Upload', icon: 'Upload' },
   { id: 'analytics', label: 'Analytics', icon: 'BarChart3' },
   { id: 'agent', label: 'AI Assistant', icon: 'Bot' }

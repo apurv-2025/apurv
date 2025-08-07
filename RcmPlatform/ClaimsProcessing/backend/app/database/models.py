@@ -39,6 +39,20 @@ class AgentTaskType(str, enum.Enum):
     ANSWER_QUESTION = "answer_question"
     TROUBLESHOOT = "troubleshoot"
 
+class WorkQueueStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ASSIGNED = "ASSIGNED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+class WorkQueuePriority(str, enum.Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    URGENT = "URGENT"
+
 class Claim(Base):
     __tablename__ = "claims"
     
@@ -72,6 +86,14 @@ class Claim(Base):
     raw_edi_data = Column(Text)
     parsed_data = Column(JSON)
     validation_errors = Column(JSON)
+    
+    # Work Queue Information
+    work_queue_status = Column(Enum(WorkQueueStatus), default=WorkQueueStatus.PENDING)
+    work_queue_priority = Column(Enum(WorkQueuePriority), default=WorkQueuePriority.MEDIUM)
+    assigned_to = Column(String(100))  # User ID or agent ID
+    assigned_at = Column(DateTime)
+    estimated_completion = Column(DateTime)
+    work_notes = Column(Text)
     
     # Timestamps
     created_at = Column(DateTime, server_default=func.now())
@@ -192,4 +214,31 @@ class AgentTask(Base):
     created_at = Column(DateTime, server_default=func.now())
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class WorkQueue(Base):
+    __tablename__ = "work_queue"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False)
+    claim = relationship("Claim")
+    
+    # Assignment information
+    assigned_by = Column(String(100), nullable=False)  # User who assigned the claim
+    assigned_to = Column(String(100), nullable=False)  # User or agent assigned to work on it
+    assigned_at = Column(DateTime, server_default=func.now())
+    
+    # Work queue details
+    status = Column(Enum(WorkQueueStatus), default=WorkQueueStatus.PENDING)
+    priority = Column(Enum(WorkQueuePriority), default=WorkQueuePriority.MEDIUM)
+    estimated_completion = Column(DateTime)
+    actual_completion = Column(DateTime)
+    
+    # Work details
+    work_notes = Column(Text)
+    action_taken = Column(Text)
+    result_summary = Column(Text)
+    
+    # Timestamps
+    created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

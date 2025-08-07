@@ -84,6 +84,106 @@ class ClaimsService {
     });
     return summary;
   }
+
+  // Work Queue Methods
+  async getWorkQueue(filters = {}) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/claims/work-queue/?${new URLSearchParams(filters)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch work queue');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching work queue:', error);
+      throw new Error('Failed to fetch work queue. Please try again.');
+    }
+  }
+
+  async getWorkQueueSummary() {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/claims/work-queue/summary`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch work queue summary');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching work queue summary:', error);
+      throw new Error('Failed to fetch work queue summary. Please try again.');
+    }
+  }
+
+  async assignClaimToWorkQueue(claimId, assignment) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/claims/${claimId}/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(assignment),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to assign claim to work queue');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error assigning claim to work queue:', error);
+      throw new Error('Failed to assign claim to work queue. Please try again.');
+    }
+  }
+
+  async updateWorkQueueItem(workQueueId, update) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/claims/work-queue/${workQueueId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(update),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update work queue item');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating work queue item:', error);
+      throw new Error('Failed to update work queue item. Please try again.');
+    }
+  }
+
+  async assignWorkQueueToAgent(workQueueId, agentId, taskType = 'process_claim') {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/claims/work-queue/${workQueueId}/assign-to-agent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ agent_id: agentId, task_type: taskType }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to assign to agent');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error assigning to agent:', error);
+      throw new Error('Failed to assign to agent. Please try again.');
+    }
+  }
+
+  async getAvailableAgents() {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/claims/work-queue/available-agents`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch available agents');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching available agents:', error);
+      throw new Error('Failed to fetch available agents. Please try again.');
+    }
+  }
 }
 
 export const claimsService = new ClaimsService();

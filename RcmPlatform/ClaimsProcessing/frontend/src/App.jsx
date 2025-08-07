@@ -3,6 +3,7 @@ import Header from './components/layout/Header';
 import Navigation from './components/layout/Navigation';
 import Dashboard from './pages/Dashboard';
 import ClaimsList from './pages/ClaimsList';
+import WorkQueuePage from './pages/WorkQueuePage';
 import Upload from './pages/Upload';
 import Agent from './pages/Agent';
 import FloatingChatWidget from './components/agent/FloatingChatWidget';
@@ -16,6 +17,8 @@ const App = () => {
         return <Dashboard />;
       case 'claims':
         return <ClaimsList />;
+      case 'work-queue':
+        return <WorkQueuePage />;
       case 'upload':
         return <Upload />;
       case 'agent':

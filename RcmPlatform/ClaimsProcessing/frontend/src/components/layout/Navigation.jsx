@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, FileText, Upload, Bot } from 'lucide-react';
+import { Activity, FileText, Upload, Bot, List } from 'lucide-react';
 import { NAVIGATION_TABS } from '../../utils/constants';
 
 const Navigation = ({ activeTab, onTabChange }) => {
@@ -8,7 +8,8 @@ const Navigation = ({ activeTab, onTabChange }) => {
       Activity,
       FileText,
       Upload,
-      Bot
+      Bot,
+      List
     };
     return icons[iconName] || Activity;
   };

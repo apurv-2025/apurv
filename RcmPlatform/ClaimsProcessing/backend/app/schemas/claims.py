@@ -5,7 +5,7 @@ from pydantic import BaseModel, validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from decimal import Decimal
-from app.database.models import ClaimType, ClaimStatus
+from app.database.models import ClaimType, ClaimStatus, WorkQueueStatus, WorkQueuePriority
 
 class ServiceLineBase(BaseModel):
     line_number: int
@@ -114,4 +114,53 @@ class Payer(PayerBase):
     
     class Config:
         from_attributes = True
+
+# Work Queue Schemas
+class WorkQueueAssignment(BaseModel):
+    assigned_to: str
+    priority: WorkQueuePriority = WorkQueuePriority.MEDIUM
+    estimated_completion: Optional[datetime] = None
+    work_notes: Optional[str] = None
+
+class WorkQueueUpdate(BaseModel):
+    status: Optional[WorkQueueStatus] = None
+    priority: Optional[WorkQueuePriority] = None
+    estimated_completion: Optional[datetime] = None
+    work_notes: Optional[str] = None
+    action_taken: Optional[str] = None
+    result_summary: Optional[str] = None
+
+class WorkQueueItem(BaseModel):
+    id: int
+    claim_id: int
+    claim_number: str
+    patient_name: str
+    claim_type: ClaimType
+    claim_status: ClaimStatus
+    assigned_by: str
+    assigned_to: str
+    assigned_at: datetime
+    status: WorkQueueStatus
+    priority: WorkQueuePriority
+    estimated_completion: Optional[datetime] = None
+    actual_completion: Optional[datetime] = None
+    work_notes: Optional[str] = None
+    action_taken: Optional[str] = None
+    result_summary: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class WorkQueueSummary(BaseModel):
+    total_items: int
+    pending: int
+    assigned: int
+    in_progress: int
+    completed: int
+    failed: int
+    cancelled: int
+    by_priority: Dict[str, int]
+    by_assignee: Dict[str, int]
 
