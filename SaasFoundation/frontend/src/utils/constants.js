@@ -70,9 +70,49 @@ export const API_ENDPOINTS = {
 };
 
 export const ROLES = {
+  // Management Roles
   OWNER: 'owner',
   ADMIN: 'admin',
+  REVENUE_CYCLE_MANAGER: 'Revenue Cycle Manager',
+  COMPLIANCE_OFFICER: 'Compliance Officer',
+  RCM_ANALYST: 'RCM Analyst',
+  RCM_SYSTEMS_ANALYST: 'RCM Systems Analyst',
+  PRACTICE_MANAGER: 'Practice Manager',
+  
+  // Specialist Roles
+  INSURANCE_VERIFICATION_SPECIALIST: 'Insurance Verification Specialist',
+  PRE_AUTHORIZATION_SPECIALIST: 'Pre-Authorization Specialist',
+  FINANCIAL_COUNSELOR: 'Financial Counselor',
+  REGISTRATION_CLERK: 'Registration Clerk',
+  MEDICAL_CODER: 'Medical Coder',
+  CLINICAL_DOCUMENTATION_SPECIALIST: 'Clinical Documentation Specialist',
+  CHARGE_ENTRY_SPECIALIST: 'Charge Entry Specialist',
+  BILLING_SPECIALIST: 'Billing Specialist / Medical Biller',
+  ACCOUNTS_RECEIVABLE_SPECIALIST: 'Accounts Receivable (A/R) Specialist',
+  PAYMENT_POSTER: 'Payment Poster',
+  DENIALS_MANAGEMENT_SPECIALIST: 'Denials Management Specialist',
+  PATIENT_COLLECTIONS_REPRESENTATIVE: 'Patient Collections Representative',
+  SCHEDULER: 'Scheduler',
+  HEALTH_INFORMATION_TECHNICIAN: 'Health Information Technician',
+  
+  // Legacy role for backward compatibility
   MEMBER: 'member'
+};
+
+// Management roles that have administrative privileges
+export const MANAGEMENT_ROLES = [
+  ROLES.OWNER,
+  ROLES.ADMIN,
+  ROLES.REVENUE_CYCLE_MANAGER,
+  ROLES.COMPLIANCE_OFFICER,
+  ROLES.RCM_ANALYST,
+  ROLES.RCM_SYSTEMS_ANALYST,
+  ROLES.PRACTICE_MANAGER
+];
+
+// Helper function to check if a role has management privileges
+export const isManagementRole = (role) => {
+  return MANAGEMENT_ROLES.includes(role);
 };
 
 export const SUBSCRIPTION_STATUS = {

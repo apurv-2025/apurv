@@ -10,6 +10,7 @@ from app.schemas.subscription import (
     PaymentMethodCreate, 
     PaymentMethodResponse
 )
+from app.schemas.organization import is_management_role
 from app.services.subscription import subscription_service
 from app.services.organization import organization_service
 
@@ -38,7 +39,7 @@ async def add_payment_method(
     """Add new payment method"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions to manage payment methods")
     
     return subscription_service.add_payment_method(organization.id, payment_data, db)
@@ -52,7 +53,7 @@ async def delete_payment_method(
     """Delete payment method"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions to manage payment methods")
     
     return subscription_service.delete_payment_method(payment_method_id, organization.id, db)

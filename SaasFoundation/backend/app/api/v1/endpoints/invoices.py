@@ -8,6 +8,7 @@ from app.models.models import User
 from app.schemas.subscription import (
     InvoiceResponse
 )
+from app.schemas.organization import is_management_role
 from app.services.subscription import subscription_service
 from app.services.organization import organization_service
 
@@ -52,7 +53,7 @@ async def pay_invoice(
     """Simulate payment of invoice"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions to pay invoices")
     
     return subscription_service.pay_invoice(invoice_id, organization.id, db)

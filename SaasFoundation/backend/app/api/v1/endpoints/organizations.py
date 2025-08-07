@@ -9,7 +9,8 @@ from app.dependencies import get_current_user
 from app.models.models import User, OrganizationMember, Invitation
 from app.schemas.organization import (
     OrganizationWithRole, OrganizationUpdate, OrganizationResponse,
-    MemberResponse, MemberUpdate, InvitationCreate, InvitationResponse, InvitationDetailsResponse
+    MemberResponse, MemberUpdate, InvitationCreate, InvitationResponse, InvitationDetailsResponse,
+    is_management_role
 )
 from app.services.organization import organization_service
 from app.utils.datetime_utils import utcnow
@@ -80,10 +81,10 @@ async def update_member_role(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update member role (admin/owner only)"""
+    """Update member role (management roles only)"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     member = db.query(OrganizationMember).filter(
@@ -114,10 +115,10 @@ async def remove_member(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Remove member (admin/owner only)"""
+    """Remove member (management roles only)"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     member = db.query(OrganizationMember).filter(
@@ -143,10 +144,10 @@ async def invite_user(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Invite user to organization (admin/owner only)"""
+    """Invite user to organization (management roles only)"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
 
@@ -209,10 +210,10 @@ async def invite_user(
 
 @router.get("/current/invitations", response_model=List[InvitationResponse])
 async def get_invitations(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Get pending invitations (admin/owner only)"""
+    """Get pending invitations (management roles only)"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     invitations = db.query(Invitation).filter(
@@ -228,10 +229,10 @@ async def cancel_invitation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Cancel invitation (admin/owner only)"""
+    """Cancel invitation (management roles only)"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     invitation = db.query(Invitation).filter(
@@ -254,10 +255,10 @@ async def resend_invitation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Resend invitation (admin/owner only)"""
+    """Resend invitation (management roles only)"""
     organization, role = organization_service.get_user_organization(current_user.id, db)
     
-    if not organization or role not in ["admin", "owner"]:
+    if not organization or not is_management_role(role):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     
     invitation = db.query(Invitation).filter(
