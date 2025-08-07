@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: agentic-postgres
     environment:
       POSTGRES_DB: agentic_core
@@ -11,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentic_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./agentic-core/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -42,12 +40,12 @@ services:
   # Agentic Core Backend
   agentic-backend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: dockerfile
     container_name: agentic-backend
     environment:
       # Database
-      DATABASE_URL: postgresql://agentic_user:${POSTGRES_PASSWORD:-agentic_password}@postgres:5432/agentic_core
+      DATABASE_URL: postgresql://agentic_user:agentic_password@postgres:5432/agentic_core
       
       # Redis
       REDIS_URL: redis://redis:6379
@@ -135,12 +133,12 @@ services:
   # Celery Worker (Background Tasks)
   celery-worker:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: dockerfile
     container_name: agentic-celery-worker
     command: celery -A agentic_core.worker worker --loglevel=info
     environment:
-      DATABASE_URL: postgresql://agentic_user:${POSTGRES_PASSWORD:-agentic_password}@postgres:5432/agentic_core
+      DATABASE_URL: postgresql://agentic_user:agentic_password@postgres:5432/agentic_core
       REDIS_URL: redis://redis:6379
       AI_API_KEY: ${AI_API_KEY}
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -162,12 +160,12 @@ services:
   # Celery Beat (Scheduled Tasks)
   celery-beat:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: dockerfile
     container_name: agentic-celery-beat
     command: celery -A agentic_core.worker beat --loglevel=info
     environment:
-      DATABASE_URL: postgresql://agentic_user:${POSTGRES_PASSWORD:-agentic_password}@postgres:5432/agentic_core
+      DATABASE_URL: postgresql://agentic_user:agentic_password@postgres:5432/agentic_core
       REDIS_URL: redis://redis:6379
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0

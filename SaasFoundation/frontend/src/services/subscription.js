@@ -2,35 +2,24 @@ import { api } from './api';
 
 const SUBSCRIPTION_ENDPOINTS = {
   // Plans
-  PLANS: '/subscription/plans',
-  CURRENT_PLAN: '/subscription/current',
+  PLANS: '/api/v1/pricing/plans',
+  CURRENT_PLAN: '/api/v1/subscriptions/current',
   
   // Subscription management
-  SUBSCRIBE: '/subscription/subscribe',
-  UPDATE_PLAN: '/subscription/update-plan',
-  CANCEL: '/subscription/cancel',
-  PAUSE: '/subscription/pause',
-  RESUME: '/subscription/resume',
+  SUBSCRIBE: '/api/v1/subscriptions',
+  UPDATE_PLAN: '/api/v1/subscriptions',
+  CANCEL: '/api/v1/subscriptions',
   
   // Billing
-  BILLING_INFO: '/subscription/billing',
-  PAYMENT_METHODS: '/subscription/payment-methods',
-  DEFAULT_PAYMENT_METHOD: '/subscription/payment-methods/default',
+  PAYMENT_METHODS: '/api/v1/payment-methods',
+  DEFAULT_PAYMENT_METHOD: '/api/v1/payment-methods/default',
   
   // Usage and metrics
-  USAGE: '/subscription/usage',
-  USAGE_HISTORY: '/subscription/usage/history',
-  METRICS: '/subscription/metrics',
+  USAGE: '/api/v1/subscriptions/usage',
   
   // Invoices
-  INVOICES: '/subscription/invoices',
-  INVOICE_DOWNLOAD: '/subscription/invoices/:id/download',
-  
-  // Billing portal
-  PORTAL_SESSION: '/subscription/portal-session',
-  
-  // Webhooks
-  WEBHOOK_VERIFY: '/subscription/webhook/verify'
+  INVOICES: '/api/v1/invoices',
+  INVOICE_DOWNLOAD: '/api/v1/invoices/:id/download'
 };
 
 class SubscriptionService {
@@ -146,85 +135,9 @@ class SubscriptionService {
     }
   }
 
-  async pauseSubscription(pauseData = {}) {
-    try {
-      const response = await api.post(SUBSCRIPTION_ENDPOINTS.PAUSE, pauseData);
-      
-      if (response.success) {
-        this.currentSubscription = response.data.subscription;
-        return {
-          success: true,
-          data: response.data,
-          message: 'Subscription paused successfully'
-        };
-      }
-      
-      throw new Error(response.message || 'Pause failed');
-    } catch (error) {
-      console.error('Pause subscription error:', error);
-      throw new Error(error.message || 'Failed to pause subscription');
-    }
-  }
 
-  async resumeSubscription() {
-    try {
-      const response = await api.post(SUBSCRIPTION_ENDPOINTS.RESUME);
-      
-      if (response.success) {
-        this.currentSubscription = response.data.subscription;
-        return {
-          success: true,
-          data: response.data,
-          message: 'Subscription resumed successfully'
-        };
-      }
-      
-      throw new Error(response.message || 'Resume failed');
-    } catch (error) {
-      console.error('Resume subscription error:', error);
-      throw new Error(error.message || 'Failed to resume subscription');
-    }
-  }
 
   // ===== BILLING MANAGEMENT =====
-
-  async getBillingInfo() {
-    try {
-      const response = await api.get(SUBSCRIPTION_ENDPOINTS.BILLING_INFO);
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response.data,
-          message: 'Billing information fetched successfully'
-        };
-      }
-      
-      throw new Error(response.message || 'Failed to fetch billing info');
-    } catch (error) {
-      console.error('Get billing info error:', error);
-      throw new Error(error.message || 'Failed to fetch billing information');
-    }
-  }
-
-  async updateBillingInfo(billingData) {
-    try {
-      const response = await api.put(SUBSCRIPTION_ENDPOINTS.BILLING_INFO, billingData);
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response.data,
-          message: 'Billing information updated successfully'
-        };
-      }
-      
-      throw new Error(response.message || 'Billing update failed');
-    } catch (error) {
-      console.error('Update billing info error:', error);
-      throw new Error(error.message || 'Failed to update billing information');
-    }
-  }
 
   async getPaymentMethods() {
     try {
@@ -325,50 +238,7 @@ class SubscriptionService {
     }
   }
 
-  async getUsageHistory(params = {}) {
-    try {
-      const queryParams = new URLSearchParams({
-        startDate: params.startDate,
-        endDate: params.endDate,
-        granularity: params.granularity || 'daily',
-        ...params
-      }).toString();
-      
-      const response = await api.get(`${SUBSCRIPTION_ENDPOINTS.USAGE_HISTORY}?${queryParams}`);
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response.data,
-          message: 'Usage history fetched successfully'
-        };
-      }
-      
-      throw new Error(response.message || 'Failed to fetch usage history');
-    } catch (error) {
-      console.error('Get usage history error:', error);
-      throw new Error(error.message || 'Failed to fetch usage history');
-    }
-  }
 
-  async getMetrics(timeframe = '30d') {
-    try {
-      const response = await api.get(`${SUBSCRIPTION_ENDPOINTS.METRICS}?timeframe=${timeframe}`);
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response.data.metrics,
-          message: 'Metrics fetched successfully'
-        };
-      }
-      
-      throw new Error(response.message || 'Failed to fetch metrics');
-    } catch (error) {
-      console.error('Get metrics error:', error);
-      throw new Error(error.message || 'Failed to fetch usage metrics');
-    }
-  }
 
   // ===== INVOICE MANAGEMENT =====
 
@@ -449,28 +319,7 @@ class SubscriptionService {
     }
   }
 
-  // ===== BILLING PORTAL =====
 
-  async createPortalSession(returnUrl) {
-    try {
-      const response = await api.post(SUBSCRIPTION_ENDPOINTS.PORTAL_SESSION, {
-        returnUrl: returnUrl || window.location.href
-      });
-      
-      if (response.success) {
-        return {
-          success: true,
-          data: response.data,
-          message: 'Portal session created successfully'
-        };
-      }
-      
-      throw new Error(response.message || 'Failed to create portal session');
-    } catch (error) {
-      console.error('Create portal session error:', error);
-      throw new Error(error.message || 'Failed to access billing portal');
-    }
-  }
 
   // ===== UTILITY METHODS =====
 

@@ -1,5 +1,5 @@
 # =============================================================================
-# FILE: backend/app/agent/manager.py
+# FILE: backend/app/agent/manager.py (Mock Version)
 # =============================================================================
 import asyncio
 from typing import Dict, Any, Optional
@@ -7,86 +7,63 @@ from datetime import datetime, timedelta
 import logging
 from sqlalchemy.orm import Session
 
-from .graph import ClaimsProcessingGraph
-from .tools import ClaimsTools
-from .model_factory import ModelFactory
-from ..config import agent_settings
+# Mock imports - AI dependencies commented out
+# from .graph import ClaimsProcessingGraph
+# from .tools import ClaimsTools
+# from .model_factory import ModelFactory
+# from ..config import agent_settings
 from ..database.connection import SessionLocal
 
 logger = logging.getLogger(__name__)
 
 class AgentManager:
-    """Manages agent instances and tasks"""
+    """Mock agent manager - AI functionality disabled"""
     
     def __init__(self):
-        self.settings = agent_settings
-        self.agent: Optional[ClaimsProcessingGraph] = None
-        self.tools: Optional[ClaimsTools] = None
+        # self.settings = agent_settings
+        self.agent = None
+        self.tools = None
         self.active_tasks: Dict[str, Any] = {}
         self.task_history: Dict[str, Any] = {}
         
     async def initialize(self):
-        """Initialize the agent"""
-        try:
-            logger.info(f"Initializing agent with provider: {self.settings.MODEL_PROVIDER}")
-            
-            # Create model
-            model = ModelFactory.create_model(self.settings)
-            logger.info(f"Created model: {model._llm_type}")
-            
-            # Create tools
-            self.tools = ClaimsTools()
-            logger.info(f"Initialized {len(self.tools.get_tools())} tools")
-            
-            # Create agent
-            self.agent = ClaimsProcessingGraph(model, self.tools)
-            logger.info("Agent initialized successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize agent: {e}")
-            raise
+        """Mock initialization"""
+        logger.info("Mock agent initialized - AI functionality disabled")
+        self.agent = None
     
     async def process_task(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Process a task through the agent"""
-        
-        if not self.agent:
-            await self.initialize()
+        """Mock task processing - AI functionality disabled"""
         
         task_id = request.get("task_id") or f"task_{datetime.utcnow().timestamp()}"
         
-        try:
-            # Track active task
-            self.active_tasks[task_id] = {
-                "start_time": datetime.utcnow(),
-                "request": request,
-                "status": "processing"
-            }
-            
-            # Process with timeout
-            response = await asyncio.wait_for(
-                self.agent.process_request(request),
-                timeout=self.settings.AGENT_TIMEOUT
-            )
-            
-            # Update task tracking
-            self.active_tasks[task_id]["status"] = "completed"
-            self.active_tasks[task_id]["end_time"] = datetime.utcnow()
-            
-            # Move to history
-            self.task_history[task_id] = self.active_tasks.pop(task_id)
-            
-            return response.dict()
-            
-        except asyncio.TimeoutError:
-            logger.error(f"Task {task_id} timed out")
-            self.active_tasks[task_id]["status"] = "timeout"
-            raise Exception("Task timed out")
-            
-        except Exception as e:
-            logger.error(f"Task {task_id} failed: {e}")
-            self.active_tasks[task_id]["status"] = "failed"
-            self.active_tasks[task_id]["error"] = str(e)
-            raise
+        # Track active task
+        self.active_tasks[task_id] = {
+            "start_time": datetime.utcnow(),
+            "request": request,
+            "status": "processing"
+        }
+        
+        # Mock response
+        mock_response = {
+            "task_id": task_id,
+            "status": "completed",
+            "result": {"message": "AI Agent functionality is currently disabled"},
+            "message": "AI Agent is not available in this build",
+            "suggestions": [],
+            "next_actions": [],
+            "confidence_score": 0.0,
+            "processing_time": 0.0,
+            "completed_at": datetime.utcnow()
+        }
+        
+        # Update task tracking
+        self.active_tasks[task_id]["status"] = "completed"
+        self.active_tasks[task_id]["end_time"] = datetime.utcnow()
+        
+        # Move to history
+        self.task_history[task_id] = self.active_tasks.pop(task_id)
+        
+        return mock_response
     
     def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Get status of a task"""

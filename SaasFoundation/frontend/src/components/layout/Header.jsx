@@ -49,6 +49,10 @@ const Header = () => {
                   Notifications
                 </Link>
                 
+                <Link to="/settings" className="text-white hover:text-blue-100 p-2 rounded-md transition-colors" title="Settings">
+                  <Cog6ToothIcon className="h-5 w-5" />
+                </Link>
+                
                 <Button
                   variant="ghost"
                   size="sm"

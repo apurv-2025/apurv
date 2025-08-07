@@ -33,7 +33,7 @@ export const API_ENDPOINTS = {
   
   SUBSCRIPTIONS: {
     CURRENT: '/api/v1/subscriptions/current',
-    CREATE: '/api/v1/subscriptions/subscriptions',
+    CREATE: '/api/v1/subscriptions',
     UPDATE: `/api/v1/subscriptions`,
     CANCEL: `/api/v1/subscriptions`
   },
