@@ -1,0 +1,171 @@
+# Scheduling2.0 - Merged Medical and Mental Health Scheduling System
+# Docker Compose configuration for the unified scheduling application with integrated Patient and Practitioner services
+
+services:
+  # Patient Service Database
+  patient_postgres:
+    image: postgres:15-alpine
+    container_name: patient_postgres
+    environment:
+      POSTGRES_DB: fhir_db
+      POSTGRES_USER: fhir_user
+      POSTGRES_PASSWORD: fhir_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - patient_postgres_data:/var/lib/postgresql/data
+      - ../../HealthcareFoundation/CoreServices/Patient/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - scheduling_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fhir_user -d fhir_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Patient Service Backend
+  patient_service:
+    build:
+      context: ../../HealthcareFoundation/CoreServices/Patient/backend
+      dockerfile: Dockerfile
+    container_name: patient_service
+    environment:
+      DATABASE_URL: postgresql://fhir_user:fhir_password@patient_postgres:5432/fhir_db
+    ports:
+      - "8001:8000"
+    depends_on:
+      patient_postgres:
+        condition: service_healthy
+    volumes:
+      - ../../HealthcareFoundation/CoreServices/Patient/backend:/app
+    networks:
+      - scheduling_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Practitioner Service Database
+  practitioner_postgres:
+    image: postgres:15-alpine
+    container_name: practitioner_postgres
+    environment:
+      POSTGRES_DB: fhir_practitioner_db
+      POSTGRES_USER: practitioner_user
+      POSTGRES_PASSWORD: practitioner_password
+    ports:
+      - "5434:5432"
+    volumes:
+      - practitioner_postgres_data:/var/lib/postgresql/data
+      - ../../HealthcareFoundation/CoreServices/Practitioner/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - scheduling_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U practitioner_user -d fhir_practitioner_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Practitioner Service Backend
+  practitioner_service:
+    build:
+      context: ../../HealthcareFoundation/CoreServices/Practitioner/backend
+      dockerfile: Dockerfile
+    container_name: practitioner_service
+    environment:
+      DATABASE_URL: postgresql://practitioner_user:practitioner_password@practitioner_postgres:5432/fhir_practitioner_db
+    ports:
+      - "8002:8000"
+    depends_on:
+      practitioner_postgres:
+        condition: service_healthy
+    volumes:
+      - ../../HealthcareFoundation/CoreServices/Practitioner/backend:/app
+    networks:
+      - scheduling_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Scheduling2.0 Database
+  postgres:
+    image: postgres:17
+    container_name: scheduling2_postgres
+    environment:
+      POSTGRES_DB: scheduling2_db
+      POSTGRES_USER: scheduling_user
+      POSTGRES_PASSWORD: scheduling_pass123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - scheduling_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduling_user -d scheduling2_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: scheduling2_backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://scheduling_user:scheduling_pass123@postgres:5432/scheduling2_db
+      PATIENT_SERVICE_URL: http://patient_service:8000
+      PRACTITIONER_SERVICE_URL: http://practitioner_service:8000
+      SECRET_KEY: BCPucohgb5sgE5-iK5wF30MyjGzwspJaryigw5dKwkw
+      JWT_SECRET: your-secret-key-change-in-production
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: 587
+      EMAIL_USER: agenticpractice@gmail.com
+      EMAIL_PASSWORD: bqkw xphy kvek obsf
+      EMAIL_USE_TLS: True
+      EMAIL_USE_SSL: False
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      patient_service:
+        condition: service_healthy
+      practitioner_service:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - scheduling_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: scheduling2_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+      CHOKIDAR_USEPOLLING: true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - scheduling_network
+    command: npm start
+
+volumes:
+  postgres_data:
+  patient_postgres_data:
+  practitioner_postgres_data:
+
+networks:
+  scheduling_network:
+    driver: bridge 
