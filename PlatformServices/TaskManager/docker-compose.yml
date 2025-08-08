@@ -1,0 +1,78 @@
+# docker-compose.yml
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: taskmanager_postgres
+    environment:
+      POSTGRES_DB: taskmanager
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taskmanager
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: taskmanager_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - taskmanager
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taskmanager_api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://taskuser:taskpass@postgres:5432/taskmanager
+      REDIS_URL: redis://redis:6379
+      SMTP_SERVER: ${SMTP_SERVER:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - taskmanager
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+    command: ./start.sh
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taskmanager_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - taskmanager
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  taskmanager:
+    driver: bridge
