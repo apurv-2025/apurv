@@ -1,0 +1,18 @@
+// .lintstagedrc
+{
+  "src/**/*.{js,jsx}": [
+    "eslint --fix",
+    "prettier --write",
+    "git add"
+  ],
+  "src/**/*.{css,scss}": [
+    "prettier --write",
+    "git add"
+  ],
+  "src/**/*.{json,md}": [
+    "prettier --write",
+    "git add"
+  ]
+}
+
+
