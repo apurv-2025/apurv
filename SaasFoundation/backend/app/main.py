@@ -5,6 +5,7 @@ from app.config import settings
 from app.api.v1.router import api_router
 from app.models import models
 from app.core.database import engine
+from app.middleware.activity_logging import ActivityLoggingMiddleware
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
@@ -23,6 +24,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Activity logging middleware
+app.add_middleware(ActivityLoggingMiddleware)
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")

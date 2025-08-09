@@ -53,7 +53,7 @@ class ActivityEventBase(BaseModel):
     location: Optional[str] = None
     user_agent: Optional[str] = None
     session_id: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    event_metadata: Optional[Dict[str, Any]] = None
 
 
 class ActivityEventCreate(ActivityEventBase):

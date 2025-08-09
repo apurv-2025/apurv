@@ -54,7 +54,7 @@ class ActivityEvent(Base):
     user_agent = Column(String)
     session_id = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
-    metadata = Column(JSON)  # Additional event-specific data
+    event_metadata = Column(JSON)  # Additional event-specific data
     
     # Relationships
     user = relationship("User", back_populates="activity_events")

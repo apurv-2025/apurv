@@ -1,4 +1,4 @@
-# init.sql
+-- init.sql
 -- Create database if it doesn't exist
 -- This file runs when PostgreSQL container starts for the first time
 

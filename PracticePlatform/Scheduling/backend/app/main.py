@@ -15,7 +15,7 @@ from app.models.models import *
 from app.utils.enums import UserRole
 
 # Import routers
-from app.api import patients, practitioners, waitlist, agent, practitioner_availability
+from app.api import patients, practitioners, waitlist, agent, practitioner_availability, notifications
 
 # Create all database tables
 async def create_tables():
@@ -498,6 +498,7 @@ app.include_router(patients.router)
 app.include_router(practitioners.router)
 app.include_router(waitlist.router)
 app.include_router(agent.router)
+app.include_router(notifications.router)
 # app.include_router(practitioner_availability.router)  # Commented out to use mock endpoints
 
 # Startup event

@@ -81,6 +81,7 @@ class Location(Base):
     # Relationships
     organization = relationship("Organization", back_populates="locations")
     appointments = relationship("Appointment", back_populates="location")
+    notification_settings = relationship("NotificationSettings", back_populates="organization")
 
 # ============================================================================
 # Service Code Model (from MBH-Scheduling)
@@ -220,6 +221,7 @@ class Patient(Base):
     organization = relationship("Organization", back_populates="patients")
     appointments = relationship("Appointment", back_populates="patient")
     waitlist_entries = relationship("WaitlistEntry", back_populates="patient")
+    notification_preferences = relationship("PatientNotificationPreferences", back_populates="patient", uselist=False)
 
 # ============================================================================
 # Client Model (from MBH-Scheduling)
@@ -243,6 +245,7 @@ class Client(Base):
     organization = relationship("Organization", back_populates="clients")
     appointments = relationship("Appointment", back_populates="client")
     waitlist_entries = relationship("WaitlistEntry", back_populates="client")
+    notification_preferences = relationship("ClientNotificationPreferences", back_populates="client", uselist=False)
 
 # ============================================================================
 # Practitioner Availability Model (from Scheduling project)
@@ -314,6 +317,8 @@ class Appointment(Base):
     appointment_type = relationship("AppointmentType", back_populates="appointments")
     service_code = relationship("ServiceCode", back_populates="appointments")
     location = relationship("Location", back_populates="appointments")
+    reminders = relationship("AppointmentReminder", back_populates="appointment")
+    notification_history = relationship("NotificationHistory", back_populates="appointment")
 
     # Constraints
     __table_args__ = (
@@ -352,6 +357,7 @@ class WaitlistEntry(Base):
     client = relationship("Client", back_populates="waitlist_entries")
     practitioner = relationship("Practitioner", back_populates="waitlist_entries")
     appointment_type = relationship("AppointmentType", back_populates="waitlist_entries")
+    notification_history = relationship("NotificationHistory", back_populates="waitlist_entry")
     
     __table_args__ = (
         CheckConstraint(

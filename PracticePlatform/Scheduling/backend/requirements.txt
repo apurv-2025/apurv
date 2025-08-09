@@ -28,6 +28,10 @@ requests==2.31.0
 # Email
 fastapi-mail==1.4.1
 
+# SMS (Twilio, AWS SNS)
+twilio==8.10.0
+boto3==1.34.0
+
 # Date/Time
 python-dateutil==2.8.2
 

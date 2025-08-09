@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import schemas
 import crud
+import models
 
 
 class ActivityLogService:
@@ -20,7 +21,7 @@ class ActivityLogService:
             ip_address=ip_address,
             location=location,
             user_agent=user_agent,
-            metadata={"success": success}
+            event_metadata={"success": success}
         )
         return self.activity_crud.create_event(db, event, user_id)
 
@@ -37,7 +38,7 @@ class ActivityLogService:
             client_id=client_id,
             ip_address=ip_address,
             location=location,
-            metadata={"action": action, "resource": resource}
+            event_metadata={"action": action, "resource": resource}
         )
         return self.activity_crud.create_event(db, event, user_id)
 
@@ -54,7 +55,7 @@ class ActivityLogService:
             client_id=client_id,
             ip_address=ip_address,
             location=location,
-            metadata={"action": action, "resource": resource, "resource_id": resource_id}
+            event_metadata={"action": action, "resource": resource, "resource_id": resource_id}
         )
         return self.activity_crud.create_event(db, event, user_id)
 
@@ -75,7 +76,7 @@ class ActivityLogService:
                 location=event.location,
                 clientName=client_name,
                 userId=event.user_id,
-                details=event.metadata
+                details=event.event_metadata
             )
             formatted_events.append(formatted_event)
         
