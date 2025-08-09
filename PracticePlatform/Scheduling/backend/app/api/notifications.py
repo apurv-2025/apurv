@@ -11,14 +11,17 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models.notification_models import (
-    NotificationSettings, PatientNotificationPreferences, ClientNotificationPreferences,
-    AppointmentReminder, NotificationHistory
+    NotificationSettings as NotificationSettingsModel, 
+    PatientNotificationPreferences as PatientNotificationPreferencesModel,
+    ClientNotificationPreferences as ClientNotificationPreferencesModel,
+    AppointmentReminder as AppointmentReminderModel, 
+    NotificationHistory as NotificationHistoryModel
 )
 from app.services.task_manager_integration import NotificationService
 from app.schemas.notification_schemas import (
-    NotificationSettingsCreate, NotificationSettingsUpdate,
-    PatientNotificationPreferencesCreate, PatientNotificationPreferencesUpdate,
-    ClientNotificationPreferencesCreate, ClientNotificationPreferencesUpdate,
+    NotificationSettings, NotificationSettingsCreate, NotificationSettingsUpdate,
+    PatientNotificationPreferences, PatientNotificationPreferencesCreate, PatientNotificationPreferencesUpdate,
+    ClientNotificationPreferences, ClientNotificationPreferencesCreate, ClientNotificationPreferencesUpdate,
     AppointmentReminderCreate, AppointmentReminderResponse,
     NotificationHistoryResponse
 )
@@ -39,7 +42,7 @@ async def create_notification_settings(
 ):
     """Create notification settings for an organization"""
     try:
-        db_settings = NotificationSettings(**settings.dict())
+        db_settings = NotificationSettingsModel(**settings.dict())
         db.add(db_settings)
         db.commit()
         db.refresh(db_settings)
@@ -54,8 +57,8 @@ async def get_notification_settings(
     db: Session = Depends(get_db)
 ):
     """Get notification settings for an organization"""
-    settings = db.query(NotificationSettings).filter(
-        NotificationSettings.organization_id == organization_id
+    settings = db.query(NotificationSettingsModel).filter(
+        NotificationSettingsModel.organization_id == organization_id
     ).first()
     
     if not settings:
@@ -70,8 +73,8 @@ async def update_notification_settings(
     db: Session = Depends(get_db)
 ):
     """Update notification settings for an organization"""
-    db_settings = db.query(NotificationSettings).filter(
-        NotificationSettings.organization_id == organization_id
+    db_settings = db.query(NotificationSettingsModel).filter(
+        NotificationSettingsModel.organization_id == organization_id
     ).first()
     
     if not db_settings:
@@ -96,7 +99,7 @@ async def create_patient_notification_preferences(
 ):
     """Create notification preferences for a patient"""
     try:
-        db_preferences = PatientNotificationPreferences(**preferences.dict())
+        db_preferences = PatientNotificationPreferencesModel(**preferences.dict())
         db.add(db_preferences)
         db.commit()
         db.refresh(db_preferences)
@@ -111,8 +114,8 @@ async def get_patient_notification_preferences(
     db: Session = Depends(get_db)
 ):
     """Get notification preferences for a patient"""
-    preferences = db.query(PatientNotificationPreferences).filter(
-        PatientNotificationPreferences.patient_id == patient_id
+    preferences = db.query(PatientNotificationPreferencesModel).filter(
+        PatientNotificationPreferencesModel.patient_id == patient_id
     ).first()
     
     if not preferences:
@@ -127,8 +130,8 @@ async def update_patient_notification_preferences(
     db: Session = Depends(get_db)
 ):
     """Update notification preferences for a patient"""
-    db_preferences = db.query(PatientNotificationPreferences).filter(
-        PatientNotificationPreferences.patient_id == patient_id
+    db_preferences = db.query(PatientNotificationPreferencesModel).filter(
+        PatientNotificationPreferencesModel.patient_id == patient_id
     ).first()
     
     if not db_preferences:
@@ -153,7 +156,7 @@ async def create_client_notification_preferences(
 ):
     """Create notification preferences for a client"""
     try:
-        db_preferences = ClientNotificationPreferences(**preferences.dict())
+        db_preferences = ClientNotificationPreferencesModel(**preferences.dict())
         db.add(db_preferences)
         db.commit()
         db.refresh(db_preferences)
@@ -168,8 +171,8 @@ async def get_client_notification_preferences(
     db: Session = Depends(get_db)
 ):
     """Get notification preferences for a client"""
-    preferences = db.query(ClientNotificationPreferences).filter(
-        ClientNotificationPreferences.client_id == client_id
+    preferences = db.query(ClientNotificationPreferencesModel).filter(
+        ClientNotificationPreferencesModel.client_id == client_id
     ).first()
     
     if not preferences:
@@ -184,8 +187,8 @@ async def update_client_notification_preferences(
     db: Session = Depends(get_db)
 ):
     """Update notification preferences for a client"""
-    db_preferences = db.query(ClientNotificationPreferences).filter(
-        ClientNotificationPreferences.client_id == client_id
+    db_preferences = db.query(ClientNotificationPreferencesModel).filter(
+        ClientNotificationPreferencesModel.client_id == client_id
     ).first()
     
     if not db_preferences:
@@ -412,8 +415,8 @@ async def get_notification_templates(
     db: Session = Depends(get_db)
 ):
     """Get notification templates for an organization"""
-    settings = db.query(NotificationSettings).filter(
-        NotificationSettings.organization_id == organization_id
+    settings = db.query(NotificationSettingsModel).filter(
+        NotificationSettingsModel.organization_id == organization_id
     ).first()
     
     if not settings:
@@ -431,8 +434,8 @@ async def update_notification_templates(
     db: Session = Depends(get_db)
 ):
     """Update notification templates for an organization"""
-    settings = db.query(NotificationSettings).filter(
-        NotificationSettings.organization_id == organization_id
+    settings = db.query(NotificationSettingsModel).filter(
+        NotificationSettingsModel.organization_id == organization_id
     ).first()
     
     if not settings:

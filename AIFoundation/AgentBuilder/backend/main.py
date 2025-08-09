@@ -76,7 +76,7 @@ app.add_middleware(
 
 app.add_middleware(
     TrustedHostMiddleware, 
-    allowed_hosts=["localhost", "127.0.0.1", "yourdomain.com"]
+    allowed_hosts=["localhost", "127.0.0.1", "yourdomain.com", "testserver"]
 )
 
 # Request logging middleware
@@ -145,6 +145,13 @@ async def get_metrics():
         "active_agents": "metrics_not_implemented",
         "memory_usage": "metrics_not_implemented"
     }
+
+# Include routers
+from routers import auth, agents, knowledge
+
+app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+app.include_router(agents.router, prefix="/agents", tags=["agents"])
+app.include_router(knowledge.router, prefix="/knowledge", tags=["knowledge"])
 
 # Error handlers
 @app.exception_handler(404)

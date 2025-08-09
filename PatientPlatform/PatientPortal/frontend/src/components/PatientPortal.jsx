@@ -17,14 +17,23 @@ import Records from './Records';
 import Billing from './Billing';
 import FormsUploads from './FormsUploads';
 import Telehealth from './Telehealth';
+import Help from './Help';
 import { useAuth } from '../contexts/AuthContext';
-
-// Placeholder components for remaining sections
-const Help = () => <div className="p-6">Help section coming soon...</div>;
 
 const PatientPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchTerm, setSearchTerm] = useState('');
   const { logout } = useAuth();
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+
+  const handleSearchChange = (term) => {
+    setSearchTerm(term);
+    // TODO: Implement search functionality across components
+    console.log('Search term:', term);
+  };
 
   const handleLogout = () => {
     logout();
@@ -75,7 +84,11 @@ const PatientPortal = () => {
     <div className="flex h-screen bg-gray-50">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
       <div className="flex-1 ml-64 flex flex-col">
-        <Header activeTab={activeTab} />
+        <Header 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+        onSearchChange={handleSearchChange}
+      />
         <main className="flex-1 p-6 overflow-y-auto">
           {renderContent()}
         </main>

@@ -17,7 +17,6 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'telehealth', label: 'Telehealth', icon: Video },
     { id: 'fitness', label: 'Fitness', icon: Zap },
     { id: 'wellness', label: 'Wellness', icon: Brain },
-    { id: 'agent', label: 'AI Assistant', icon: Bot },
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'help', label: 'Help', icon: HelpCircle }

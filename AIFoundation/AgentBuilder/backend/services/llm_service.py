@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import os
 from typing import Dict, Any
 from sqlalchemy.orm import Session
@@ -7,7 +7,7 @@ from services.vector_service import VectorService
 
 class LLMService:
     def __init__(self):
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", "test-key"))
         self.vector_service = VectorService()
     
     async def generate_response(self, agent: Agent, user_message: str, db: Session) -> Dict[str, Any]:
@@ -35,7 +35,14 @@ class LLMService:
             """
             
             # Generate response using OpenAI
-            response = openai.ChatCompletion.create(
+            if os.getenv("OPENAI_API_KEY") == "test-key":
+                # Mock response for testing
+                return {
+                    "response": f"Mock response from {agent.name} for: {user_message}",
+                    "confidence": 0.8
+                }
+            
+            response = self.openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": system_prompt},

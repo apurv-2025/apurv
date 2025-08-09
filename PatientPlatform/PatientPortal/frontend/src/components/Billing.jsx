@@ -928,14 +928,103 @@ const Billing = () => {
       memberId: '',
       effectiveDate: '',
       expirationDate: '',
-      type: 'primary'
+      type: 'primary',
+      frontImage: null,
+      backImage: null
     });
 
-    const handleSubmit = (e) => {
+    const handleInsuranceImageUpload = (event, side) => {
+      const file = event.target.files[0];
+      if (file) {
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size must be less than 5MB');
+          return;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('Please upload an image file (JPG, PNG)');
+          return;
+        }
+
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setInsuranceData(prev => ({
+            ...prev,
+            [side + 'Image']: e.target.result,
+            [side + 'File']: file
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      console.log('Adding insurance:', insuranceData);
-      alert('Insurance card would be added here');
-      setShowAddInsuranceModal(false);
+      
+      // Validate required fields
+      if (!insuranceData.company || !insuranceData.planName || !insuranceData.policyNumber) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      // Validate insurance card images
+      if (!insuranceData.frontImage || !insuranceData.backImage) {
+        alert('Please upload both front and back images of your insurance card');
+        return;
+      }
+
+      try {
+        // In a real implementation, this would upload to the server
+        const formData = new FormData();
+        
+        // Add insurance data
+        Object.keys(insuranceData).forEach(key => {
+          if (key !== 'frontFile' && key !== 'backFile' && key !== 'frontImage' && key !== 'backImage') {
+            formData.append(key, insuranceData[key]);
+          }
+        });
+        
+        // Add image files
+        if (insuranceData.frontFile) {
+          formData.append('frontImage', insuranceData.frontFile);
+        }
+        if (insuranceData.backFile) {
+          formData.append('backImage', insuranceData.backFile);
+        }
+
+        console.log('Uploading insurance card data:', {
+          ...insuranceData,
+          frontImageSize: insuranceData.frontFile?.size,
+          backImageSize: insuranceData.backFile?.size
+        });
+
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        alert('Insurance card uploaded successfully!');
+        setShowAddInsuranceModal(false);
+        
+        // Reset form
+        setInsuranceData({
+          company: '',
+          planName: '',
+          policyNumber: '',
+          groupNumber: '',
+          memberId: '',
+          effectiveDate: '',
+          expirationDate: '',
+          type: 'primary',
+          frontImage: null,
+          backImage: null
+        });
+        
+      } catch (error) {
+        console.error('Error uploading insurance card:', error);
+        alert('Error uploading insurance card. Please try again.');
+      }
     };
 
     if (!showAddInsuranceModal) return null;
@@ -1062,18 +1151,90 @@ const Billing = () => {
               </div>
             </div>
 
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="mt-4">
-                <label className="cursor-pointer">
-                  <span className="mt-2 block text-sm font-medium text-gray-900">
-                    Upload Insurance Card Images
-                  </span>
-                  <span className="mt-1 block text-sm text-gray-500">
-                    Front and back of your insurance card
-                  </span>
-                  <input type="file" className="sr-only" multiple accept="image/*" />
-                </label>
+            {/* Insurance Card Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-4">Insurance Card Images</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Front of Card */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Front of Card</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                    <Camera className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <label className="cursor-pointer">
+                      <span className="text-sm font-medium text-gray-900">Upload Front</span>
+                      <span className="block text-xs text-gray-500 mt-1">JPG, PNG up to 5MB</span>
+                      <input 
+                        type="file" 
+                        className="sr-only" 
+                        accept="image/*"
+                        onChange={(e) => handleInsuranceImageUpload(e, 'front')}
+                      />
+                    </label>
+                  </div>
+                  {insuranceData.frontImage && (
+                    <div className="mt-2 relative">
+                      <img 
+                        src={insuranceData.frontImage} 
+                        alt="Front of insurance card" 
+                        className="w-full h-32 object-cover rounded border"
+                      />
+                      <button
+                        onClick={() => setInsuranceData({...insuranceData, frontImage: null})}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Back of Card */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Back of Card</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                    <Camera className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <label className="cursor-pointer">
+                      <span className="text-sm font-medium text-gray-900">Upload Back</span>
+                      <span className="block text-xs text-gray-500 mt-1">JPG, PNG up to 5MB</span>
+                      <input 
+                        type="file" 
+                        className="sr-only" 
+                        accept="image/*"
+                        onChange={(e) => handleInsuranceImageUpload(e, 'back')}
+                      />
+                    </label>
+                  </div>
+                  {insuranceData.backImage && (
+                    <div className="mt-2 relative">
+                      <img 
+                        src={insuranceData.backImage} 
+                        alt="Back of insurance card" 
+                        className="w-full h-32 object-cover rounded border"
+                      />
+                      <button
+                        onClick={() => setInsuranceData({...insuranceData, backImage: null})}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <div className="text-sm text-blue-700">
+                    <p className="font-medium">Tips for uploading insurance cards:</p>
+                    <ul className="mt-1 list-disc list-inside space-y-1">
+                      <li>Ensure all text is clearly visible and not blurry</li>
+                      <li>Include the full card in the image</li>
+                      <li>Avoid shadows and glare</li>
+                      <li>Both front and back images are required</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
 

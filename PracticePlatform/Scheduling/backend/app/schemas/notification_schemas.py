@@ -107,7 +107,7 @@ class NotificationSettings(NotificationSettingsBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ============================================================================
 # Patient Notification Preferences Schemas
@@ -150,7 +150,7 @@ class PatientNotificationPreferences(PatientNotificationPreferencesBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ============================================================================
 # Client Notification Preferences Schemas
@@ -193,7 +193,7 @@ class ClientNotificationPreferences(ClientNotificationPreferencesBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ============================================================================
 # Appointment Reminder Schemas
@@ -221,7 +221,7 @@ class AppointmentReminderResponse(AppointmentReminderBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ============================================================================
 # Notification History Schemas
@@ -250,7 +250,7 @@ class NotificationHistoryResponse(NotificationHistoryBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # ============================================================================
 # Request/Response Schemas

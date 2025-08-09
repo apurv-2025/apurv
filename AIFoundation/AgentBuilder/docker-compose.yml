@@ -14,6 +14,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ai_agents_db}
       SECRET_KEY: ${SECRET_KEY}
@@ -29,7 +31,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "3000:3000"
     depends_on:
       - backend
     restart: unless-stopped

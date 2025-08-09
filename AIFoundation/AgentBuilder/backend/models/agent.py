@@ -20,6 +20,8 @@ class Agent(Base):
     
     owner = relationship("User", back_populates="agents")
 
+# Import User model to establish relationship
+from .user import User
 User.agents = relationship("Agent", back_populates="owner")
 
 class KnowledgeBase(Base):
@@ -43,7 +45,7 @@ class AgentInteraction(Base):
     agent_id = Column(Integer, ForeignKey("agents.id"))
     user_query = Column(Text)
     agent_response = Column(Text)
-    metadata = Column(JSON)  # contains session info, confidence scores, etc.
+    interaction_metadata = Column(JSON)  # contains session info, confidence scores, etc.
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     agent = relationship("Agent")

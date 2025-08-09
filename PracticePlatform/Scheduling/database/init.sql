@@ -2,14 +2,9 @@
 -- Merged schema combining Medical and Mental Health scheduling features
 -- PostgreSQL compatible SQL schema
 
--- Create database (if not exists)
-SELECT 'CREATE DATABASE scheduling2_db'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'scheduling2_db')\gexec
-
+-- Database is already created by Docker container
+-- Create extension for UUID support
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Connect to the database
-\c scheduling2_db;
 
 -- Drop existing objects if they exist (for clean recreation)
 DROP TABLE IF EXISTS waitlist_entries CASCADE;
