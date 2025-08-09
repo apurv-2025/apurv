@@ -117,11 +117,12 @@ INSERT INTO doctors (first_name, last_name, specialty, email, phone) VALUES
 ('Dr. Lisa', 'Brown', 'Dermatology', 'lisa.brown@healthcare.com', '555-0105')
 ON CONFLICT (email) DO NOTHING;
 
--- Insert sample users (passwords are hashed versions of 'password123')
+-- Insert sample users (passwords are hashed versions of 'password123' and 'testpassword123')
 INSERT INTO users (email, hashed_password, first_name, last_name, phone, address, date_of_birth, insurance_provider, insurance_id, emergency_contact_name, emergency_contact_phone) VALUES
-('john.doe@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.s5u.G', 'John', 'Doe', '555-0201', '123 Main St, City, State', '1990-05-15', 'Blue Cross', 'BC123456', 'Jane Doe', '555-0202'),
-('jane.smith@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.s5u.G', 'Jane', 'Smith', '555-0203', '456 Oak Ave, City, State', '1985-08-22', 'Aetna', 'AE789012', 'Bob Smith', '555-0204'),
-('mike.wilson@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.s5u.G', 'Mike', 'Wilson', '555-0205', '789 Pine Rd, City, State', '1978-12-10', 'Cigna', 'CI345678', 'Sue Wilson', '555-0206')
+('john.doe@example.com', '$2b$12$DdOiqvLumbzkhVcsVthSLO.hE5NKEu9WrJpGEZtsLLko8GpEkIu4K', 'John', 'Doe', '555-0201', '123 Main St, City, State', '1990-05-15', 'Blue Cross', 'BC123456', 'Jane Doe', '555-0202'),
+('jane.smith@example.com', '$2b$12$DdOiqvLumbzkhVcsVthSLO.hE5NKEu9WrJpGEZtsLLko8GpEkIu4K', 'Jane', 'Smith', '555-0203', '456 Oak Ave, City, State', '1985-08-22', 'Aetna', 'AE789012', 'Bob Smith', '555-0204'),
+('john.smith@email.com', '$2b$12$eYwk0/6aqzaQ74oduA/ekOx1H00vOeaFV.yfXNXNq5J4/PJ1wLREu', 'John', 'Smith', '555-0205', '789 Pine Rd, City, State', '1978-12-10', 'Cigna', 'CI345678', 'Sue Wilson', '555-0206'),
+('mike.wilson@example.com', '$2b$12$DdOiqvLumbzkhVcsVthSLO.hE5NKEu9WrJpGEZtsLLko8GpEkIu4K', 'Mike', 'Wilson', '555-0207', '321 Elm St, City, State', '1982-03-18', 'UnitedHealth', 'UH567890', 'Lisa Wilson', '555-0208')
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample appointments

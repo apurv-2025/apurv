@@ -48,10 +48,10 @@ const Login = () => {
             </div>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Sign in to HealthPortal
+            AI-Native Health Portal
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Access your health information securely
+            Access your health information securely in one place
           </p>
         </div>
 

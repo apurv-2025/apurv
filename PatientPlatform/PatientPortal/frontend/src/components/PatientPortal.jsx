@@ -8,7 +8,19 @@ import LabResults from './LabResults';
 import Messages from './Messages';
 import Profile from './Profile';
 import Agent from './Agent';
+import Fitness from './Fitness';
+import Wellness from './Wellness';
+import Settings from './Settings';
+import Results from './Results';
+import Prescriptions from './Prescriptions';
+import Records from './Records';
+import Billing from './Billing';
+import FormsUploads from './FormsUploads';
+import Telehealth from './Telehealth';
 import { useAuth } from '../contexts/AuthContext';
+
+// Placeholder components for remaining sections
+const Help = () => <div className="p-6">Help section coming soon...</div>;
 
 const PatientPortal = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -24,16 +36,36 @@ const PatientPortal = () => {
         return <Dashboard />;
       case 'appointments':
         return <Appointments />;
+      case 'messages':
+        return <Messages />;
+      case 'results':
+        return <Results />;
+      case 'prescriptions':
+        return <Prescriptions />;
+      case 'billing':
+        return <Billing />;
+      case 'records':
+        return <Records />;
+      case 'forms':
+        return <FormsUploads />;
+      case 'telehealth':
+        return <Telehealth />;
       case 'medications':
         return <Medications />;
       case 'lab-results':
         return <LabResults />;
-      case 'messages':
-        return <Messages />;
+      case 'fitness':
+        return <Fitness />;
+      case 'wellness':
+        return <Wellness />;
       case 'agent':
         return <Agent />;
       case 'profile':
         return <Profile />;
+      case 'settings':
+        return <Settings />;
+      case 'help':
+        return <Help />;
       default:
         return <Dashboard />;
     }

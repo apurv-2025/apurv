@@ -1,16 +1,26 @@
 import React from 'react';
-import { Heart, Activity, Calendar, Pill, TestTube, Mail, User, Settings, LogOut, Bot } from 'lucide-react';
+import { 
+  Heart, Activity, Calendar, Pill, TestTube, Mail, User, Settings, LogOut, Bot, Zap, Brain,
+  CreditCard, Folder, Upload, Video, HelpCircle
+} from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
     { id: 'appointments', label: 'Appointments', icon: Calendar },
-    { id: 'medications', label: 'Medications', icon: Pill },
-    { id: 'lab-results', label: 'Lab Results', icon: TestTube },
     { id: 'messages', label: 'Messages', icon: Mail },
+    { id: 'results', label: 'Results', icon: TestTube },
+    { id: 'prescriptions', label: 'Prescriptions', icon: Pill },
+    { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'records', label: 'Records', icon: Folder },
+    { id: 'forms', label: 'Forms & Uploads', icon: Upload },
+    { id: 'telehealth', label: 'Telehealth', icon: Video },
+    { id: 'fitness', label: 'Fitness', icon: Zap },
+    { id: 'wellness', label: 'Wellness', icon: Brain },
     { id: 'agent', label: 'AI Assistant', icon: Bot },
     { id: 'profile', label: 'Profile', icon: User },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'help', label: 'Help', icon: HelpCircle }
   ];
 
   return (
@@ -20,7 +30,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
             <Heart className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-gray-800">HealthPortal</h1>
+          <h1 className="text-xl font-bold text-gray-800">Health & Welness Portal</h1>
         </div>
       </div>
 
