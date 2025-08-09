@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test - Mental Health EHR</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+        input { width: 200px; padding: 5px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Mental Health EHR - Authentication Test</h1>
+        
+        <div class="section">
+            <h2>1. Login Test</h2>
+            <input type="email" id="email" placeholder="Email" value="admin@clinic.com">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="testLogin()">Test Login</button>
+            <div id="loginResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. Token Storage Test</h2>
+            <button onclick="checkToken()">Check Stored Token</button>
+            <div id="tokenResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. API Call Test</h2>
+            <button onclick="testNotes()">Test Notes API</button>
+            <button onclick="testAuth()">Test Auth Me</button>
+            <div id="apiResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. Debug Log</h2>
+            <textarea id="debugLog" readonly></textarea>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        
+        function log(message) {
+            const debugLog = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.value += `[${timestamp}] ${message}\n`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('debugLog').value = '';
+        }
+
+        async function apiRequest(endpoint, options = {}) {
+            const token = localStorage.getItem('access_token');
+            log(`Making request to ${endpoint}`);
+            log(`Token: ${token ? token.substring(0, 50) + '...' : 'None'}`);
+            
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                    ...options.headers,
+                },
+                ...options,
+            };
+
+            log(`Headers: ${JSON.stringify(config.headers, null, 2)}`);
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, config);
+                log(`Response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Error response: ${errorText}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                log(`Response data: ${JSON.stringify(data, null, 2).substring(0, 200)}...`);
+                return data;
+            } catch (error) {
+                log(`Request failed: ${error.message}`);
+                throw error;
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                log(`Attempting login with ${email}`);
+                const response = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password }),
+                });
+                
+                localStorage.setItem('access_token', response.access_token);
+                localStorage.setItem('user', JSON.stringify(response.user));
+                
+                resultDiv.innerHTML = `<div class="success">✅ Login successful! User: ${response.user.first_name} ${response.user.last_name}</div>`;
+                log(`Login successful, token stored`);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Login failed: ${error.message}</div>`;
+                log(`Login failed: ${error.message}`);
+            }
+        }
+
+        function checkToken() {
+            const token = localStorage.getItem('access_token');
+            const user = localStorage.getItem('user');
+            const resultDiv = document.getElementById('tokenResult');
+            
+            if (token) {
+                const userData = user ? JSON.parse(user) : null;
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Token found!</div>
+                    <div class="info">Token: ${token.substring(0, 50)}...</div>
+                    <div class="info">User: ${userData ? `${userData.first_name} ${userData.last_name} (${userData.role})` : 'No user data'}</div>
+                `;
+                log(`Token found in localStorage`);
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ No token found in localStorage</div>`;
+                log(`No token found in localStorage`);
+            }
+        }
+
+        async function testNotes() {
+            const resultDiv = document.getElementById('apiResult');
+            
+            try {
+                log(`Testing notes API`);
+                const response = await apiRequest('/notes/?page=1&page_size=20');
+                resultDiv.innerHTML = `<div class="success">✅ Notes API working! Found ${response.total} notes</div>`;
+                log(`Notes API successful`);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Notes API failed: ${error.message}</div>`;
+                log(`Notes API failed: ${error.message}`);
+            }
+        }
+
+        async function testAuth() {
+            const resultDiv = document.getElementById('apiResult');
+            
+            try {
+                log(`Testing auth/me API`);
+                const response = await apiRequest('/auth/me');
+                resultDiv.innerHTML = `<div class="success">✅ Auth API working! User: ${response.first_name} ${response.last_name}</div>`;
+                log(`Auth API successful`);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Auth API failed: ${error.message}</div>`;
+                log(`Auth API failed: ${error.message}`);
+            }
+        }
+
+        // Initialize
+        log('Auth test page loaded');
+        log(`API Base URL: ${API_BASE}`);
+    </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:17-alpine
+    container_name: mental_health_ehr_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mental_health_ehr
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mental_health_ehr_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/mental_health_ehr
+      SECRET_KEY: your-secret-key-change-in-production-make-it-very-long-and-random
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mental_health_ehr_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  backend_uploads:
+
+networks:
+  app-network:
+    driver: bridge
