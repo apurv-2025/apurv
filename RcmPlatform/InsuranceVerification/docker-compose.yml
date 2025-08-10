@@ -1,0 +1,69 @@
+# docker-compose.yml
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17
+    container_name: health_insurance_db
+    environment:
+      POSTGRES_DB: health_insurance_db
+      POSTGRES_USER: insuranceuser
+      POSTGRES_PASSWORD: insurancepass123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - health_insurance_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insuranceuser -d health_insurance_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: health_insurance_backend
+    environment:
+      DATABASE_URL: postgresql://insuranceuser:insurancepass123@postgres:5432/health_insurance_db
+      SECRET_KEY: BCPucohgb5sgE5-iK5wF30MyjGzwspJaryigw5dKwkw
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+      - uploaded_files:/app/uploads
+    networks:
+      - health_insurance_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: health_insurance_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - health_insurance_network
+
+networks:
+  health_insurance_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  uploaded_files:

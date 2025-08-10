@@ -1,0 +1,75 @@
+# docker-compose.yml
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17
+    container_name: health_insurance_db
+    environment:
+      POSTGRES_DB: health_insurance_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - health_insurance_network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: health_insurance_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - health_insurance_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: health_insurance_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/health_insurance_db
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: your_secret_key_here
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+      - uploaded_files:/app/uploads
+    networks:
+      - health_insurance_network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: health_insurance_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - health_insurance_network
+
+networks:
+  health_insurance_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  uploaded_files:

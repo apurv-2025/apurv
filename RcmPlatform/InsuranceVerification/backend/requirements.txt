@@ -1,0 +1,25 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.23
+asyncpg==0.29.0
+psycopg2-binary
+
+# Validation - FIXED versions for Pydantic v2
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# OCR and Image Processing  
+Pillow==10.1.0
+pytesseract==0.3.10
+opencv-python==4.8.1.78
+PyMuPDF==1.23.8
+
+# Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Development
+pytest==7.4.3
