@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  claims-anomaly-api:
+    build: .
+    container_name: claims-anomaly-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - claims-network
+
+  claims-anomaly-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: claims-anomaly-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - claims-anomaly-api
+    restart: unless-stopped
+    networks:
+      - claims-network
+
+  # Optional: Redis for caching (if needed in future)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: claims-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - claims-network
+
+networks:
+  claims-network:
+    driver: bridge
+
+# volumes:
+#   redis_data: 
