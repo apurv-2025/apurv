@@ -14,7 +14,7 @@ services:
       - claims_postgres_data:/var/lib/postgresql/data
       - ../../../../HealthcareFoundation/CoreServices/Claims/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "5432:5432"
+      - "5435:5432"  # Changed from 5432 to 5435
     networks:
       - claims-integrated-network
     restart: unless-stopped
@@ -37,14 +37,14 @@ services:
       SECRET_KEY: your-super-secret-key-change-in-production
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://claims-anomaly-frontend"
+      CORS_ORIGINS: "http://localhost:3002,http://localhost:3003,http://claims-anomaly-frontend"
       LOG_LEVEL: info
       ENVIRONMENT: development
     volumes:
       - ../../../../HealthcareFoundation/CoreServices/Claims:/app:ro
       - claims_service_logs:/app/logs
     ports:
-      - "8001:8000"  # Claims Service on port 8001
+      - "8002:8000"  # Changed from 8001:8000 to 8002:8000
     networks:
       - claims-integrated-network
     depends_on:
@@ -63,7 +63,7 @@ services:
     build: .
     container_name: claims-anomaly-api
     ports:
-      - "8000:8000"  # ClaimsAnomaly on port 8000
+      - "8003:8000"  # Changed from 8000:8000 to 8003:8000
     volumes:
       - ./models:/app/models
       - ./data:/app/data
@@ -72,7 +72,7 @@ services:
       - PYTHONPATH=/app
       - LOG_LEVEL=INFO
       - CLAIMS_SERVICE_URL=http://claims-service:8000  # Internal service communication
-      - CLAIMS_SERVICE_BASE_URL=http://localhost:8001  # External access
+      - CLAIMS_SERVICE_BASE_URL=http://localhost:8002  # External access
     restart: unless-stopped
     depends_on:
       - claims-service
@@ -92,11 +92,11 @@ services:
       dockerfile: Dockerfile
     container_name: claims-service-frontend
     environment:
-      REACT_APP_API_URL: http://localhost:8001
+      REACT_APP_API_URL: http://localhost:8002
       REACT_APP_ENVIRONMENT: development
       REACT_APP_VERSION: 1.0.0
     ports:
-      - "3000:80"  # Claims Service Frontend on port 3000
+      - "3002:80"  # Changed from 3000:80 to 3002:80
     networks:
       - claims-integrated-network
     depends_on:
@@ -115,9 +115,9 @@ services:
       dockerfile: Dockerfile
     container_name: claims-anomaly-frontend
     ports:
-      - "3001:3000"  # ClaimsAnomaly Frontend on port 3001
+      - "3003:3000"  # Changed from 3001:3000 to 3003:3000
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_API_URL=http://localhost:8003
       - CHOKIDAR_USEPOLLING=true
     volumes:
       - ./frontend/src:/app/src

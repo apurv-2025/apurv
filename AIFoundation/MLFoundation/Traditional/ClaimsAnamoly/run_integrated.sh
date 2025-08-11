@@ -37,11 +37,11 @@ if [ ! -f "docker-compose.integrated.yml" ]; then
 fi
 
 echo "📋 System Components:"
-echo "  • Claims Service (FHIR-compliant): http://localhost:8001"
-echo "  • Claims Service Frontend: http://localhost:3000"
-echo "  • ClaimsAnamoly API (ML): http://localhost:8000"
-echo "  • ClaimsAnamoly Frontend: http://localhost:3001"
-echo "  • PostgreSQL Database: localhost:5432"
+echo "  • Claims Service (FHIR-compliant): http://localhost:8002"
+echo "  • Claims Service Frontend: http://localhost:3002"
+echo "  • ClaimsAnamoly API (ML): http://localhost:8003"
+echo "  • ClaimsAnamoly Frontend: http://localhost:3003"
+echo "  • PostgreSQL Database: localhost:5435"
 echo ""
 
 echo "🔧 Starting services..."
@@ -55,7 +55,7 @@ echo "🏥 Checking service health..."
 
 # Check Claims Service
 echo "  • Checking Claims Service..."
-if curl -f http://localhost:8001/health > /dev/null 2>&1; then
+if curl -f http://localhost:8002/health > /dev/null 2>&1; then
     echo "    ✅ Claims Service is healthy"
 else
     echo "    ⚠️  Claims Service health check failed"
@@ -63,7 +63,7 @@ fi
 
 # Check ClaimsAnamoly API
 echo "  • Checking ClaimsAnamoly API..."
-if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+if curl -f http://localhost:8003/health > /dev/null 2>&1; then
     echo "    ✅ ClaimsAnamoly API is healthy"
 else
     echo "    ⚠️  ClaimsAnamoly API health check failed"
@@ -81,17 +81,17 @@ echo ""
 echo "🎉 Integrated system is running!"
 echo ""
 echo "📊 Access Points:"
-echo "  • Claims Service API: http://localhost:8001"
-echo "  • Claims Service Docs: http://localhost:8001/docs"
-echo "  • Claims Service Frontend: http://localhost:3000"
-echo "  • ClaimsAnamoly API: http://localhost:8000"
-echo "  • ClaimsAnamoly Docs: http://localhost:8000/docs"
-echo "  • ClaimsAnamoly Frontend: http://localhost:3001"
+echo "  • Claims Service API: http://localhost:8002"
+echo "  • Claims Service Docs: http://localhost:8002/docs"
+echo "  • Claims Service Frontend: http://localhost:3002"
+echo "  • ClaimsAnamoly API: http://localhost:8003"
+echo "  • ClaimsAnamoly Docs: http://localhost:8003/docs"
+echo "  • ClaimsAnamoly Frontend: http://localhost:3003"
 echo ""
 echo "🔍 Test Integration:"
-echo "  • Test ClaimsAnamoly scoring: curl -X POST http://localhost:8000/api/v1/score"
-echo "  • Get claims from service: curl http://localhost:8000/api/v1/claims/from-service"
-echo "  • Score claims from service: curl -X POST http://localhost:8000/api/v1/score/from-service"
+echo "  • Test ClaimsAnamoly scoring: curl -X POST http://localhost:8003/api/v1/score"
+echo "  • Get claims from service: curl http://localhost:8003/api/v1/claims/from-service"
+echo "  • Score claims from service: curl -X POST http://localhost:8003/api/v1/score/from-service"
 echo ""
 echo "📝 Logs:"
 echo "  • View all logs: docker-compose -f docker-compose.integrated.yml logs -f"

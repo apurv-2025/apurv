@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # Load model
     if load_model():
         print("✅ Model loaded successfully")
-        print("🌐 API server starting on http://localhost:8000")
+        print("🌐 API server starting on http://localhost:8003")
         print("📚 Available endpoints:")
         print("   GET  /                           - API information")
         print("   GET  /health                     - Health check")
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         uvicorn.run(
             "api.fastapi_app:app",
             host="0.0.0.0",
-            port=8000,
+            port=8003,
             reload=True,
             log_level="info"
         )

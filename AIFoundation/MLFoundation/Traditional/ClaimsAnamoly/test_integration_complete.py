@@ -21,8 +21,8 @@ class IntegrationTester:
     """Test the complete integration between ClaimsAnamoly and Claims Service"""
     
     def __init__(self):
-        self.claims_service_url = "http://localhost:8001"
-        self.claims_anomaly_url = "http://localhost:8000"
+        self.claims_service_url = "http://localhost:8002"
+        self.claims_anomaly_url = "http://localhost:8003"
         self.timeout = 30
         
     async def test_health_checks(self) -> bool:
