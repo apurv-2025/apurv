@@ -1,13 +1,14 @@
 // File: src/components/layout/Navigation.js
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Upload, CheckCircle, Clock, BarChart3 } from 'lucide-react';
+import { Upload, CheckCircle, Clock, BarChart3, Bot } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
   
   const navItems = [
     { path: '/', name: 'Dashboard', icon: BarChart3 },
+    { path: '/agent', name: 'AI Assistant', icon: Bot },
     { path: '/upload', name: 'Upload Card', icon: Upload },
     { path: '/eligibility', name: 'Eligibility Check', icon: CheckCircle },
     { path: '/history', name: 'Request History', icon: Clock }

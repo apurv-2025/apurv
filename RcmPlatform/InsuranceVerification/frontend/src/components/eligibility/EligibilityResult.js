@@ -1,6 +1,6 @@
 // File: src/components/eligibility/EligibilityResult.js
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, Eye, Code } from 'lucide-react';
+import { CheckCircle, XCircle, Eye } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';

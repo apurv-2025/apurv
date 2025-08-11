@@ -15,7 +15,7 @@ from app.schemas.agent import (
     ComplexVerificationRequest, ComplexVerificationResponse,
     ToolInfo, AgentHealthResponse, AgentMetricsResponse
 )
-from app.services.agentic_integration import agentic_insurance_verification
+from app.services.real_agentic_integration import agentic_insurance_verification
 
 router = APIRouter()
 

@@ -9,6 +9,24 @@ export const useEligibilityCheck = () => {
   const { showSuccess, showError } = useToast();
   const { dispatch } = useApp();
 
+  const checkResponse = useCallback(async (requestId) => {
+    try {
+      const result = await apiService.getEligibilityResponse(requestId);
+      
+      dispatch({ type: 'SET_ELIGIBILITY_RESULT', payload: result });
+      dispatch({ 
+        type: 'UPDATE_REQUEST', 
+        payload: { id: requestId, status: 'completed', result } 
+      });
+      
+      showSuccess('Eligibility response received!');
+      
+      return result;
+    } catch (error) {
+      console.error('Error checking eligibility response:', error);
+    }
+  }, [dispatch, showSuccess]);
+
   const submitEligibilityInquiry = useCallback(async (requestData) => {
     try {
       setSubmitting(true);
@@ -37,25 +55,7 @@ export const useEligibilityCheck = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [dispatch, showSuccess, showError]);
-
-  const checkResponse = useCallback(async (requestId) => {
-    try {
-      const result = await apiService.getEligibilityResponse(requestId);
-      
-      dispatch({ type: 'SET_ELIGIBILITY_RESULT', payload: result });
-      dispatch({ 
-        type: 'UPDATE_REQUEST', 
-        payload: { id: requestId, status: 'completed', result } 
-      });
-      
-      showSuccess('Eligibility response received!');
-      
-      return result;
-    } catch (error) {
-      console.error('Error checking eligibility response:', error);
-    }
-  }, [dispatch, showSuccess]);
+  }, [dispatch, showSuccess, showError, checkResponse]);
 
   return {
     submitEligibilityInquiry,

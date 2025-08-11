@@ -4,7 +4,6 @@ import { FileText } from 'lucide-react';
 import { apiService } from '../../services/apiService';
 
 const StatusBar = () => {
-  const [requestCount, setRequestCount] = useState(0);
   const [apiStatus, setApiStatus] = useState('connected');
 
   useEffect(() => {
@@ -39,7 +38,7 @@ const StatusBar = () => {
           </div>
         </div>
         <div>
-          Processed {requestCount} requests
+          Health Insurance Verification System
         </div>
       </div>
     </div>

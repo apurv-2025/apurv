@@ -1,10 +1,9 @@
 // File: src/pages/Dashboard.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Upload, CheckCircle, Clock, TrendingUp, Users, FileText } from 'lucide-react';
+import { Upload, CheckCircle, Clock, TrendingUp, FileText } from 'lucide-react';
 import Card from '../components/common/Card';
 import { useApp } from '../contexts/AppContext';
-import { apiService } from '../services/apiService';
 
 const Dashboard = () => {
   const { requests } = useApp();

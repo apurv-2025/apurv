@@ -23,7 +23,7 @@ export const ToastProvider = ({ children }) => {
 
     if (duration > 0) {
       setTimeout(() => {
-        removeToast(id);
+        setToasts(prev => prev.filter(t => t.id !== id));
       }, duration);
     }
 

@@ -13,6 +13,7 @@ from typing import Dict, Any
 
 # Configuration
 INSURANCE_VERIFICATION_URL = "http://localhost:8000"
+AGENTIC_CORE_PATH = "AIFoundation/AgenticFoundation/agentic-core"
 
 class AgentIntegrationTest:
     """Test class for AI Agent integration with InsuranceVerification"""
@@ -370,6 +371,7 @@ if __name__ == "__main__":
     print("AI Agent Integration Test Script for InsuranceVerification")
     print("Make sure the InsuranceVerification service is running!")
     print(f"InsuranceVerification URL: {INSURANCE_VERIFICATION_URL}")
+    print(f"Agentic Core Location: {AGENTIC_CORE_PATH}")
     print()
     
     # Run the tests

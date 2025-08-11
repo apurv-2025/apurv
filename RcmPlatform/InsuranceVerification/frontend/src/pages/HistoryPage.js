@@ -1,6 +1,6 @@
 // File: src/pages/HistoryPage.js
 import React, { useState } from 'react';
-import { Clock, CheckCircle, Filter, Search } from 'lucide-react';
+import { Clock, CheckCircle, Search } from 'lucide-react';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { useApp } from '../contexts/AppContext';
