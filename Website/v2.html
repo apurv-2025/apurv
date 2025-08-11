@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Practice - The only agentic practice operations software</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #ffffff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #2563eb;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-actions .nav-link {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-actions .nav-link:hover {
+            color: #2563eb;
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 120px 0 80px;
+            margin-top: 70px;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .hero-cta {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 16px;
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .hero-secondary {
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 16px;
+        }
+
+        /* Trusted By Section */
+        .trusted-by {
+            padding: 60px 0;
+            background: #f8fafc;
+            text-align: center;
+        }
+
+        .trusted-by h3 {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .customer-quote {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .quote-text {
+            font-size: 1.1rem;
+            color: #374151;
+            font-style: italic;
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .quote-author {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .author-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+        }
+
+        .feature {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            margin-bottom: 120px;
+        }
+
+        .feature:nth-child(even) .feature-content {
+            order: 2;
+        }
+
+        .feature:nth-child(even) .feature-demo {
+            order: 1;
+        }
+
+        .feature h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+        }
+
+        .feature p {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-bottom: 30px;
+            line-height: 1.7;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            color: #374151;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .code-demo {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 8px;
+            margin-right: 16px;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot:nth-child(1) { background: #ef4444; }
+        .code-dot:nth-child(2) { background: #f59e0b; }
+        .code-dot:nth-child(3) { background: #10b981; }
+
+        .code-filename {
+            color: #cbd5e1;
+            font-size: 13px;
+        }
+
+        .code-content {
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .code-keyword { color: #f472b6; }
+        .code-string { color: #34d399; }
+        .code-function { color: #60a5fa; }
+        .code-comment { color: #94a3b8; }
+
+        /* Three Column Features */
+        .three-col-features {
+            background: #f8fafc;
+            padding: 100px 0;
+        }
+
+        .three-col-features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 60px;
+            color: #1a1a1a;
+        }
+
+        .three-col-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .col-feature {
+            background: white;
+            padding: 40px 32px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .col-feature:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .col-feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 24px;
+        }
+
+        .col-feature h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        .col-feature p {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .final-cta {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .final-cta h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .final-cta p {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links,
+            .nav-actions {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .feature {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .feature:nth-child(even) .feature-content {
+                order: 1;
+            }
+
+            .feature:nth-child(even) .feature-demo {
+                order: 2;
+            }
+
+            .three-col-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .final-cta h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="logo">agenticpractice.ai</a>
+                <ul class="nav-links">
+                    <li><a href="#product">Product</a></li>
+                    <li><a href="#platform">Platform</a></li>
+                    <li><a href="#who">Who we're for</a></li>
+                    <li><a href="#resources">Resources</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <a href="#" class="nav-link">Book Demo</a>
+                    <a href="#" class="nav-link">Login</a>
+                    <a href="#" class="nav-cta">Signup for Free</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>The only agentic practice operations software</h1>
+                <p>Automate healthcare practice operations with AI agents that handle scheduling, documentation, billing, and patient communication with unprecedented intelligence and efficiency.</p>
+                <a href="#" class="hero-cta">Start Free Trial</a>
+                <a href="#" class="hero-secondary">Watch Demo →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trusted By Section -->
+    <section class="trusted-by">
+        <div class="container">
+            <h3>Trusted by the fastest-growing healthcare practices</h3>
+            <div class="customer-quote">
+                <p class="quote-text">"Agentic Practice transformed our workflow overnight. What used to take our staff hours now happens automatically. The AI agents understand context better than any system we've used – it's like having the most experienced practice manager working 24/7."</p>
+                <div class="quote-author">
+                    <div class="author-avatar">DR</div>
+                    <div>
+                        <strong>Dr. Sarah Rodriguez</strong><br>
+                        <span style="color: #64748b;">Chief Medical Officer at Modern Health Clinic</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <!-- Feature 1: Intelligent Scheduling -->
+            <div class="feature">
+                <div class="feature-content">
+                    <h2>Intelligent Scheduling</h2>
+                    <p>AI agents that understand patient preferences, provider availability, and clinical requirements to optimize scheduling automatically.</p>
+                    <ul class="feature-list">
+                        <li>Real-time schedule optimization with conflict resolution</li>
+                        <li>Automated appointment reminders and rescheduling</li>
+                        <li>Patient preference learning and accommodation</li>
+                        <li>Provider workload balancing across multiple locations</li>
+                    </ul>
+                </div>
+                <div class="feature-demo">
+                    <div class="code-demo">
+                        <div class="code-header">
+                            <div class="code-dots">
+                                <div class="code-dot"></div>
+                                <div class="code-dot"></div>
+                                <div class="code-dot"></div>
+                            </div>
+                            <span class="code-filename">scheduleAppointment.js</span>
+                        </div>
+                        <div class="code-content">
+<span class="code-keyword">const</span> <span class="code-function">scheduleAppointment</span> = <span class="code-keyword">async</span> () => {<br>
+&nbsp;&nbsp;<span class="code-keyword">const</span> appointment = <span class="code-keyword">await</span> <span class="code-function">agenticPractice</span>.<span class="code-function">schedule</span>({<br>
+&nbsp;&nbsp;&nbsp;&nbsp;patientId: <span class="code-string">"patient_12345"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;appointmentType: <span class="code-string">"routine_checkup"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;preferences: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timePreference: <span class="code-string">"morning"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;providerPreference: <span class="code-string">"Dr. Smith"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;});<br>
+<br>
+&nbsp;&nbsp;<span class="code-comment">// AI automatically handles conflicts</span><br>
+&nbsp;&nbsp;<span class="code-comment">// and optimizes for all constraints</span><br>
+&nbsp;&nbsp;<span class="code-keyword">return</span> appointment;<br>
+};
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 2: Automated Documentation -->
+            <div class="feature">
+                <div class="feature-content">
+                    <h2>Automated Documentation</h2>
+                    <p>Transform clinical conversations into comprehensive medical records with AI that understands medical terminology and compliance requirements.</p>
+                    <ul class="feature-list">
+                        <li>Real-time clinical note generation from conversations</li>
+                        <li>ICD-10 and CPT code automation with accuracy validation</li>
+                        <li>SOAP note structuring with clinical decision support</li>
+                        <li>Automated quality assurance and compliance checking</li>
+                    </ul>
+                </div>
+                <div class="feature-demo">
+                    <div class="code-demo">
+                        <div class="code-header">
+                            <div class="code-dots">
+                                <div class="code-dot"></div>
+                                <div class="code-dot"></div>
+                                <div class="code-dot"></div>
+                            </div>
+                            <span class="code-filename">generateClinicalNote.js</span>
+                        </div>
+                        <div class="code-content">
+<span class="code-keyword">const</span> <span class="code-function">generateNote</span> = <span class="code-keyword">async</span> (encounter) => {<br>
+&nbsp;&nbsp;<span class="code-keyword">const</span> clinicalNote = <span class="code-keyword">await</span> <span class="code-function">agenticPractice</span>.<span class="code-function">documentation</span>({<br>
+&nbsp;&nbsp;&nbsp;&nbsp;encounterId: encounter.id,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;audioTranscript: encounter.transcript,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;patientHistory: encounter.patient.history<br>
+&nbsp;&nbsp;});<br>
+<br>
+&nbsp;&nbsp;<span class="code-comment">// Auto-generated structured note</span><br>
+&nbsp;&nbsp;<span class="code-keyword">return</span> {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;soap: clinicalNote.soapNote,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;icdCodes: clinicalNote.diagnosticCodes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cptCodes: clinicalNote.procedureCodes,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;complianceScore: clinicalNote.qualityMetrics<br>
+&nbsp;&nbsp;};<br>
+};
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 3: Intelligent Billing -->
+            <div class="feature">
+                <div class="feature-content">
+                    <h2>Intelligent Billing</h2>
+                    <p>End-to-end revenue cycle management with AI agents that handle claims, denials, and patient communications automatically.</p>
+                    <ul class="feature-list">
+                        <li>Automated claim submission with pre-validation</li>
+                        <li>Intelligent denial management and appeals processing</li>
+                        <li>Patient payment plans and communication automation</li>
+                        <li>Real-time revenue analytics and optimization</li>
+                    </ul>
+                </div>
+                <div class="feature-demo">
+                    <div class="code-demo">
+                        <div class="code-header">
+                            <div class="code-dots">
+                                <div class="code-dot"></div>
+                                <div class="code-dot"></div>
+                                <div class="code-dot"></div>
+                            </div>
+                            <span class="code-filename">processClaim.js</span>
+                        </div>
+                        <div class="code-content">
+<span class="code-keyword">const</span> <span class="code-function">submitClaim</span> = <span class="code-keyword">async</span> (encounter) => {<br>
+&nbsp;&nbsp;<span class="code-keyword">const</span> claim = <span class="code-keyword">await</span> <span class="code-function">agenticPractice</span>.<span class="code-function">billing</span>.<span class="code-function">createClaim</span>({<br>
+&nbsp;&nbsp;&nbsp;&nbsp;encounterId: encounter.id,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;payerId: encounter.insurance.id,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;autoValidate: <span class="code-keyword">true</span><br>
+&nbsp;&nbsp;});<br>
+<br>
+&nbsp;&nbsp;<span class="code-comment">// AI validates and optimizes before submission</span><br>
+&nbsp;&nbsp;<span class="code-keyword">if</span> (claim.validationScore > 0.95) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">await</span> claim.<span class="code-function">submit</span>();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span> { status: <span class="code-string">"submitted"</span>, confidence: <span class="code-string">"high"</span> };<br>
+&nbsp;&nbsp;}<br>
+};
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Three Column Features -->
+    <section class="three-col-features">
+        <div class="container">
+            <h2>AI-native practice operations</h2>
+            <div class="three-col-grid">
+                <div class="col-feature">
+                    <div class="col-feature-icon">🚀</div>
+                    <h3>Lightning-fast deployment</h3>
+                    <p>Get your AI agents operational in minutes with our plug-and-play integration system that works with any EHR or practice management system.</p>
+                </div>
+                <div class="col-feature">
+                    <div class="col-feature-icon">🔒</div>
+                    <h3>Enterprise-grade security</h3>
+                    <p>HIPAA-compliant infrastructure with end-to-end encryption, SOC 2 certification, and role-based access controls for complete data protection.</p>
+                </div>
+                <div class="col-feature">
+                    <div class="col-feature-icon">📈</div>
+                    <h3>Continuous improvement</h3>
+                    <p>AI agents learn from your practice patterns and continuously optimize workflows, reducing costs and improving patient satisfaction scores.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <div class="container">
+            <h2>Transform your practice operations today</h2>
+            <p>Join hundreds of healthcare practices already using AI agents to automate their operations and focus on what matters most – patient care.</p>
+            <a href="#" class="hero-cta">Start Your Free Trial</a>
+            <a href="#" class="hero-secondary">Schedule Demo →</a>
+        </div>
+    </section>
+</body>
+</html>
