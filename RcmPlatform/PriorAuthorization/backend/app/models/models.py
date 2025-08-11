@@ -241,7 +241,7 @@ class AuthorizationAudit(Base, TimestampMixin):
     notes = Column(Text)
     previous_status = Column(String(20))
     new_status = Column(String(20))
-    metadata = Column(JSON)  # Additional action metadata
+    action_metadata = Column(JSON)  # Additional action metadata
 
 # File: app/schemas/prior_authorization.py - Pydantic Schemas
 from typing import Optional, List, Dict, Any

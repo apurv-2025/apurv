@@ -1,13 +1,14 @@
 // File: src/components/layout/Navigation.js - Navigation Component
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { FileText, CheckCircle, User, Clock } from 'lucide-react';
+import { FileText, CheckCircle, User, Clock, Bot } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
   
   const navItems = [
     { path: '/', name: 'Dashboard', icon: FileText },
+    { path: '/ai-assistant', name: 'AI Assistant', icon: Bot },
     { path: '/prior-authorization', name: 'Prior Authorization', icon: CheckCircle },
     { path: '/patient-information', name: 'Patient Information', icon: User },
     { path: '/history', name: 'Request History', icon: Clock }

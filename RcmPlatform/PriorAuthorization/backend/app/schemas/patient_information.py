@@ -1,7 +1,7 @@
-# File: app/schemas/patient_information.py
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, field_validator, EmailStr, Field
-from datetime import datetime, date
+# Patient Information Schemas
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Dict, Any
+from datetime import date, datetime
 from enum import Enum
 
 
@@ -12,229 +12,162 @@ class Gender(str, Enum):
 
 
 class InsuranceInfo(BaseModel):
-    """Insurance information schema"""
-    carrier_name: str = Field(..., min_length=1, max_length=255)
-    policy_number: str = Field(..., min_length=1, max_length=100)
-    group_number: Optional[str] = Field(None, max_length=100)
-    effective_date: Optional[date] = None
-    expiration_date: Optional[date] = None
-    copay_amount: Optional[float] = Field(None, ge=0)
-    deductible_amount: Optional[float] = Field(None, ge=0)
-    coverage_type: Optional[str] = Field(None, max_length=50)
-    
-    @field_validator('copay_amount', 'deductible_amount')
-    @classmethod
-    def validate_amounts(cls, v):
-        if v is not None and v < 0:
-            raise ValueError('Amount must be non-negative')
-        return v
+    carrier_name: str = Field(..., description="Insurance carrier name")
+    policy_number: str = Field(..., description="Policy number")
+    group_number: Optional[str] = Field(None, description="Group number")
+    effective_date: Optional[date] = Field(None, description="Effective date")
+    copay_amount: Optional[float] = Field(None, description="Copay amount")
+    deductible_amount: Optional[float] = Field(None, description="Deductible amount")
 
 
 class EmergencyContact(BaseModel):
-    """Emergency contact information"""
-    name: str = Field(..., min_length=1, max_length=255)
-    phone: str = Field(..., min_length=10, max_length=20)
-    relationship: str = Field(..., min_length=1, max_length=50)
-    address: Optional[str] = Field(None, max_length=500)
-    
-    @field_validator('phone')
-    @classmethod
-    def validate_phone(cls, v):
-        # Remove non-digit characters for validation
-        digits_only = ''.join(filter(str.isdigit, v))
-        if len(digits_only) < 10:
-            raise ValueError('Phone number must contain at least 10 digits')
-        return v
+    name: str = Field(..., description="Emergency contact name")
+    phone: str = Field(..., description="Emergency contact phone")
+    relationship: str = Field(..., description="Relationship to patient")
 
 
 class AllergyInfo(BaseModel):
-    """Allergy information"""
-    allergen: str = Field(..., min_length=1, max_length=255)
-    reaction: Optional[str] = Field(None, max_length=500)
-    severity: Optional[str] = Field(None, max_length=50)
-    date_identified: Optional[date] = None
-    status: Optional[str] = Field("active", max_length=20)  # active, inactive, resolved
-    notes: Optional[str] = Field(None, max_length=1000)
+    allergen: str = Field(..., description="Allergen name")
+    reaction: Optional[str] = Field(None, description="Allergic reaction")
+    severity: Optional[str] = Field(None, description="Reaction severity")
 
 
 class MedicalCondition(BaseModel):
-    """Medical condition information"""
-    condition: str = Field(..., min_length=1, max_length=255)
-    icd_code: Optional[str] = Field(None, max_length=20)
-    date_diagnosed: Optional[date] = None
-    status: Optional[str] = Field("active", max_length=20)  # active, inactive, resolved
-    severity: Optional[str] = Field(None, max_length=50)
-    treating_physician: Optional[str] = Field(None, max_length=255)
-    notes: Optional[str] = Field(None, max_length=1000)
+    condition: str = Field(..., description="Medical condition")
+    icd_code: Optional[str] = Field(None, description="ICD-10 code")
+    date_diagnosed: Optional[date] = Field(None, description="Date diagnosed")
+    status: Optional[str] = Field(None, description="Condition status")
 
 
 class Medication(BaseModel):
-    """Medication information"""
-    name: str = Field(..., min_length=1, max_length=255)
-    dosage: Optional[str] = Field(None, max_length=100)
-    frequency: Optional[str] = Field(None, max_length=100)
-    route: Optional[str] = Field(None, max_length=50)  # oral, IV, etc.
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    prescribing_physician: Optional[str] = Field(None, max_length=255)
-    ndc_code: Optional[str] = Field(None, max_length=20)  # National Drug Code
-    status: Optional[str] = Field("active", max_length=20)  # active, discontinued
-    notes: Optional[str] = Field(None, max_length=1000)
+    name: str = Field(..., description="Medication name")
+    dosage: Optional[str] = Field(None, description="Dosage")
+    frequency: Optional[str] = Field(None, description="Frequency")
+    prescribing_physician: Optional[str] = Field(None, description="Prescribing physician")
 
 
 class PatientInformationBase(BaseModel):
-    """Base patient information schema"""
     # Demographics
-    first_name: str = Field(..., min_length=1, max_length=100)
-    last_name: str = Field(..., min_length=1, max_length=100)
-    middle_name: Optional[str] = Field(None, max_length=100)
-    date_of_birth: date
-    gender: Gender
-    ssn: Optional[str] = Field(None, min_length=9, max_length=11)
+    first_name: str = Field(..., description="Patient first name")
+    last_name: str = Field(..., description="Patient last name")
+    middle_name: Optional[str] = Field(None, description="Patient middle name")
+    date_of_birth: date = Field(..., description="Date of birth")
+    gender: Gender = Field(..., description="Gender")
+    ssn: Optional[str] = Field(None, description="Social Security Number")
     
     # Contact Information
-    address_line1: Optional[str] = Field(None, max_length=255)
-    address_line2: Optional[str] = Field(None, max_length=255)
-    city: Optional[str] = Field(None, max_length=100)
-    state: Optional[str] = Field(None, max_length=10)
-    zip_code: Optional[str] = Field(None, max_length=20)
-    phone_home: Optional[str] = Field(None, max_length=20)
-    phone_work: Optional[str] = Field(None, max_length=20)
-    phone_mobile: Optional[str] = Field(None, max_length=20)
-    email: Optional[EmailStr] = None
+    address_line1: Optional[str] = Field(None, description="Address line 1")
+    address_line2: Optional[str] = Field(None, description="Address line 2")
+    city: Optional[str] = Field(None, description="City")
+    state: Optional[str] = Field(None, description="State")
+    zip_code: Optional[str] = Field(None, description="ZIP code")
+    phone_home: Optional[str] = Field(None, description="Home phone")
+    phone_work: Optional[str] = Field(None, description="Work phone")
+    phone_mobile: Optional[str] = Field(None, description="Mobile phone")
+    email: Optional[EmailStr] = Field(None, description="Email address")
     
     # Insurance Information
-    primary_insurance: Optional[InsuranceInfo] = None
-    secondary_insurance: Optional[InsuranceInfo] = None
-    member_id_primary: Optional[str] = Field(None, max_length=100)
-    member_id_secondary: Optional[str] = Field(None, max_length=100)
+    primary_insurance: Optional[InsuranceInfo] = Field(None, description="Primary insurance")
+    secondary_insurance: Optional[InsuranceInfo] = Field(None, description="Secondary insurance")
+    member_id_primary: Optional[str] = Field(None, description="Primary member ID")
+    member_id_secondary: Optional[str] = Field(None, description="Secondary member ID")
     
     # Emergency Contact
-    emergency_contact: Optional[EmergencyContact] = None
+    emergency_contact: Optional[EmergencyContact] = Field(None, description="Emergency contact")
     
     # Medical Information
-    primary_care_provider: Optional[str] = Field(None, max_length=255)
-    allergies: Optional[List[AllergyInfo]] = None
-    medical_conditions: Optional[List[MedicalCondition]] = None
-    medications: Optional[List[Medication]] = None
+    primary_care_provider: Optional[str] = Field(None, description="Primary care provider")
+    allergies: Optional[List[AllergyInfo]] = Field(None, description="Allergies")
+    medical_conditions: Optional[List[MedicalCondition]] = Field(None, description="Medical conditions")
+    medications: Optional[List[Medication]] = Field(None, description="Current medications")
     
     # Consent
-    hipaa_authorization: bool = False
-    consent_date: Optional[datetime] = None
-    
-    @field_validator('date_of_birth')
-    @classmethod
-    def validate_dob(cls, v):
-        if v > date.today():
-            raise ValueError('Date of birth cannot be in the future')
-        if v < date(1900, 1, 1):
-            raise ValueError('Date of birth cannot be before 1900')
-        return v
-    
-    @field_validator('ssn')
-    @classmethod
-    def validate_ssn(cls, v):
-        if v is not None:
-            # Remove non-digit characters
-            digits_only = ''.join(filter(str.isdigit, v))
-            if len(digits_only) != 9:
-                raise ValueError('SSN must contain exactly 9 digits')
-        return v
+    hipaa_authorization: bool = Field(False, description="HIPAA authorization")
+    consent_date: Optional[datetime] = Field(None, description="Consent date")
 
 
 class PatientInformationCreate(PatientInformationBase):
-    """Schema for creating a new patient"""
-    # All fields from base, no additional requirements
     pass
 
 
 class PatientInformationUpdate(BaseModel):
-    """Schema for updating patient information"""
     # All fields optional for updates
-    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    middle_name: Optional[str] = Field(None, max_length=100)
-    date_of_birth: Optional[date] = None
-    gender: Optional[Gender] = None
-    ssn: Optional[str] = Field(None, min_length=9, max_length=11)
-    
-    # Contact Information
-    address_line1: Optional[str] = Field(None, max_length=255)
-    address_line2: Optional[str] = Field(None, max_length=255)
-    city: Optional[str] = Field(None, max_length=100)
-    state: Optional[str] = Field(None, max_length=10)
-    zip_code: Optional[str] = Field(None, max_length=20)
-    phone_home: Optional[str] = Field(None, max_length=20)
-    phone_work: Optional[str] = Field(None, max_length=20)
-    phone_mobile: Optional[str] = Field(None, max_length=20)
-    email: Optional[EmailStr] = None
-    
-    # Insurance Information
-    primary_insurance: Optional[InsuranceInfo] = None
-    secondary_insurance: Optional[InsuranceInfo] = None
-    member_id_primary: Optional[str] = Field(None, max_length=100)
-    member_id_secondary: Optional[str] = Field(None, max_length=100)
-    
-    # Emergency Contact
-    emergency_contact: Optional[EmergencyContact] = None
-    
-    # Medical Information
-    primary_care_provider: Optional[str] = Field(None, max_length=255)
-    allergies: Optional[List[AllergyInfo]] = None
-    medical_conditions: Optional[List[MedicalCondition]] = None
-    medications: Optional[List[Medication]] = None
-    
-    # Consent
-    hipaa_authorization: Optional[bool] = None
-    consent_date: Optional[datetime] = None
+    first_name: Optional[str] = Field(None, description="Patient first name")
+    last_name: Optional[str] = Field(None, description="Patient last name")
+    middle_name: Optional[str] = Field(None, description="Patient middle name")
+    address_line1: Optional[str] = Field(None, description="Address line 1")
+    address_line2: Optional[str] = Field(None, description="Address line 2")
+    city: Optional[str] = Field(None, description="City")
+    state: Optional[str] = Field(None, description="State")
+    zip_code: Optional[str] = Field(None, description="ZIP code")
+    phone_home: Optional[str] = Field(None, description="Home phone")
+    phone_work: Optional[str] = Field(None, description="Work phone")
+    phone_mobile: Optional[str] = Field(None, description="Mobile phone")
+    email: Optional[EmailStr] = Field(None, description="Email address")
+    primary_insurance: Optional[InsuranceInfo] = Field(None, description="Primary insurance")
+    secondary_insurance: Optional[InsuranceInfo] = Field(None, description="Secondary insurance")
+    emergency_contact: Optional[EmergencyContact] = Field(None, description="Emergency contact")
+    allergies: Optional[List[AllergyInfo]] = Field(None, description="Allergies")
+    medical_conditions: Optional[List[MedicalCondition]] = Field(None, description="Medical conditions")
+    medications: Optional[List[Medication]] = Field(None, description="Current medications")
 
 
 class PatientInformation(PatientInformationBase):
-    """Complete patient information schema with database fields"""
-    id: int
-    patient_id: str
-    edi_275_content: Optional[str] = None
-    last_edi_update: Optional[datetime] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    id: int = Field(..., description="Patient ID")
+    patient_id: str = Field(..., description="Unique patient identifier")
+    edi_275_content: Optional[str] = Field(None, description="EDI 275 content")
+    last_edi_update: Optional[datetime] = Field(None, description="Last EDI update")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     model_config = {"from_attributes": True}
 
 
 class PatientEDI275Response(BaseModel):
-    """EDI 275 response schema"""
-    patient_id: str
-    edi_275: str
-    message: str
-    generated_at: datetime
-    control_number: Optional[str] = None
-    status: str = "generated"
-
-
-class PatientSearchRequest(BaseModel):
-    """Patient search request schema"""
-    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    date_of_birth: Optional[date] = None
-    member_id: Optional[str] = Field(None, max_length=100)
-    ssn: Optional[str] = Field(None, min_length=9, max_length=11)
-    phone: Optional[str] = Field(None, max_length=20)
-    email: Optional[EmailStr] = None
+    patient_id: str = Field(..., description="Patient ID")
+    edi_275: str = Field(..., description="EDI 275 content")
+    message: str = Field(..., description="Response message")
+    generated_at: datetime = Field(..., description="Generation timestamp")
 
 
 class PatientSummary(BaseModel):
     """Patient summary for lists"""
-    id: int
-    patient_id: str
-    first_name: str
-    last_name: str
-    date_of_birth: date
-    gender: Gender
-    member_id_primary: Optional[str] = None
-    phone_mobile: Optional[str] = None
-    email: Optional[str] = None
-    created_at: datetime
+    id: int = Field(..., description="Patient ID")
+    patient_id: str = Field(..., description="Unique patient identifier")
+    first_name: str = Field(..., description="Patient first name")
+    last_name: str = Field(..., description="Patient last name")
+    date_of_birth: date = Field(..., description="Date of birth")
+    gender: Gender = Field(..., description="Gender")
+    member_id_primary: Optional[str] = Field(None, description="Primary member ID")
+    city: Optional[str] = Field(None, description="City")
+    state: Optional[str] = Field(None, description="State")
+    created_at: datetime = Field(..., description="Creation timestamp")
 
     model_config = {"from_attributes": True}
+
+
+class PatientSearchRequest(BaseModel):
+    """Patient search request schema"""
+    first_name: Optional[str] = Field(None, description="Patient first name")
+    last_name: Optional[str] = Field(None, description="Patient last name")
+    member_id: Optional[str] = Field(None, description="Member ID")
+    date_of_birth: Optional[date] = Field(None, description="Date of birth")
+    city: Optional[str] = Field(None, description="City")
+    state: Optional[str] = Field(None, description="State")
+    limit: int = Field(10, description="Maximum number of results")
+    offset: int = Field(0, description="Number of results to skip")
+
+
+class PatientStatistics(BaseModel):
+    """Patient-specific statistics"""
+    patient_id: str = Field(..., description="Patient ID")
+    patient_name: str = Field(..., description="Patient name")
+    total_requests: int = Field(..., description="Total requests for this patient")
+    approved_requests: int = Field(..., description="Approved requests for this patient")
+    denied_requests: int = Field(..., description="Denied requests for this patient")
+    approval_rate: float = Field(..., description="Patient approval rate")
+    total_units_requested: int = Field(..., description="Total units requested")
+    total_units_approved: int = Field(..., description="Total units approved")
+    last_request_date: Optional[date] = Field(None, description="Date of last request")
 
 

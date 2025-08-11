@@ -1,0 +1,129 @@
+services:
+  # Patient Microservice Database
+  patient_postgres:
+    image: postgres:15-alpine
+    container_name: patient_postgres
+    environment:
+      POSTGRES_DB: fhir_db
+      POSTGRES_USER: fhir_user
+      POSTGRES_PASSWORD: fhir_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - patient_postgres_data:/var/lib/postgresql/data
+      - ../HealthcareFoundation/CoreServices/Patient/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fhir_user -d fhir_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - integrated_network
+
+  # Patient Microservice Backend
+  patient_backend:
+    build:
+      context: ../HealthcareFoundation/CoreServices/Patient/backend
+      dockerfile: Dockerfile
+    container_name: patient_backend
+    environment:
+      DATABASE_URL: postgresql://fhir_user:fhir_password@patient_postgres:5432/fhir_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      patient_postgres:
+        condition: service_healthy
+    volumes:
+      - ../HealthcareFoundation/CoreServices/Patient/backend:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - integrated_network
+
+  # Patient Microservice Frontend
+  patient_frontend:
+    build:
+      context: ../HealthcareFoundation/CoreServices/Patient/frontend
+      dockerfile: Dockerfile
+    container_name: patient_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      patient_backend:
+        condition: service_healthy
+    networks:
+      - integrated_network
+
+  # Prior Authorization Database
+  preauth_postgres:
+    image: postgres:17
+    container_name: preauth_postgres
+    environment:
+      POSTGRES_DB: health_insurance_preauth_db
+      POSTGRES_USER: insuranceuser
+      POSTGRES_PASSWORD: insurancepass123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5435:5432"
+    volumes:
+      - preauth_postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - integrated_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insuranceuser -d health_insurance_preauth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prior Authorization Backend API
+  preauth_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: preauth_backend
+    environment:
+      DATABASE_URL: postgresql://insuranceuser:insurancepass123@preauth_postgres:5432/health_insurance_preauth_db
+      SECRET_KEY: BCPucohgb5sgE5-iK5wF30MyjGzwspJaryigw5dKwkw
+      PATIENT_SERVICE_URL: http://patient_backend:8000
+    ports:
+      - "8002:8000"
+    depends_on:
+      - preauth_postgres
+      - patient_backend
+    volumes:
+      - ./backend:/app
+      - uploaded_files:/app/uploads
+    networks:
+      - integrated_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Prior Authorization Frontend React App
+  preauth_frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: preauth_frontend
+    ports:
+      - "3002:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8002
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - preauth_backend
+    networks:
+      - integrated_network
+
+networks:
+  integrated_network:
+    driver: bridge
+
+volumes:
+  patient_postgres_data:
+  preauth_postgres_data:
+  uploaded_files: 

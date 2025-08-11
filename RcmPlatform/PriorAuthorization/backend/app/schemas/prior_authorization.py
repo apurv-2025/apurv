@@ -1,12 +1,11 @@
-# File: app/schemas/prior_authorization.py
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, field_validator, Field
-from datetime import datetime, date
+# Prior Authorization Schemas
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional, Dict, Any
+from datetime import date, datetime
 from enum import Enum
 
 
 class RequestType(str, Enum):
-    """EDI 278 Request Types"""
     INITIAL = "00"
     RECONSIDERATION = "01"
     APPEAL = "02"
@@ -15,7 +14,6 @@ class RequestType(str, Enum):
 
 
 class CertificationType(str, Enum):
-    """EDI 278 Certification Types"""
     INITIAL = "I"
     RENEWAL = "R"
     REVISION = "S"
@@ -23,7 +21,6 @@ class CertificationType(str, Enum):
 
 
 class ResponseCode(str, Enum):
-    """EDI 278 Response Codes"""
     APPROVED = "A1"
     MODIFIED = "A2"
     DENIED = "A3"
@@ -44,207 +41,143 @@ class Priority(str, Enum):
 
 
 class ProcedureCodeInfo(BaseModel):
-    """Procedure code information"""
-    code: str = Field(..., min_length=1, max_length=20)
-    description: Optional[str] = Field(None, max_length=500)
-    modifier: Optional[str] = Field(None, max_length=10)
-    units: Optional[int] = Field(1, ge=1)
-    code_type: Optional[str] = Field(None, max_length=10)  # CPT, HCPCS
-    
-    @field_validator('code')
-    @classmethod
-    def validate_code(cls, v):
-        if not v.strip():
-            raise ValueError('Procedure code cannot be empty')
-        return v.strip().upper()
+    code: str = Field(..., description="CPT or HCPCS code")
+    description: Optional[str] = Field(None, description="Code description")
+    modifier: Optional[str] = Field(None, description="Procedure modifier")
+    units: Optional[int] = Field(1, description="Number of units")
 
 
 class DiagnosisCodeInfo(BaseModel):
-    """Diagnosis code information"""
-    code: str = Field(..., min_length=1, max_length=20)
-    description: Optional[str] = Field(None, max_length=500)
-    is_primary: bool = False
-    
-    @field_validator('code')
-    @classmethod
-    def validate_code(cls, v):
-        if not v.strip():
-            raise ValueError('Diagnosis code cannot be empty')
-        return v.strip().upper()
+    code: str = Field(..., description="ICD-10 diagnosis code")
+    description: Optional[str] = Field(None, description="Diagnosis description")
+    is_primary: bool = Field(False, description="Whether this is the primary diagnosis")
 
 
 class PriorAuthorizationRequestBase(BaseModel):
-    """Base prior authorization request schema"""
     # Patient Information
-    patient_first_name: str = Field(..., min_length=1, max_length=100)
-    patient_last_name: str = Field(..., min_length=1, max_length=100)
-    patient_dob: date
-    patient_gender: Gender
-    member_id: str = Field(..., min_length=1, max_length=100)
+    patient_first_name: str = Field(..., description="Patient first name")
+    patient_last_name: str = Field(..., description="Patient last name")
+    patient_dob: date = Field(..., description="Patient date of birth")
+    patient_gender: Gender = Field(..., description="Patient gender")
+    member_id: str = Field(..., description="Insurance member ID")
     
     # Provider Information
-    requesting_provider_npi: str = Field(..., min_length=10, max_length=10)
-    requesting_provider_name: Optional[str] = Field(None, max_length=255)
-    servicing_provider_npi: Optional[str] = Field(None, min_length=10, max_length=10)
-    servicing_provider_name: Optional[str] = Field(None, max_length=255)
+    requesting_provider_npi: str = Field(..., description="Requesting provider NPI")
+    requesting_provider_name: Optional[str] = Field(None, description="Requesting provider name")
+    servicing_provider_npi: Optional[str] = Field(None, description="Servicing provider NPI")
+    servicing_provider_name: Optional[str] = Field(None, description="Servicing provider name")
     
     # Authorization Details
-    request_type: RequestType = RequestType.INITIAL
-    certification_type: CertificationType = CertificationType.INITIAL
-    service_type_code: Optional[str] = Field(None, max_length=10)
+    request_type: RequestType = Field(RequestType.INITIAL, description="Request type")
+    certification_type: CertificationType = Field(CertificationType.INITIAL, description="Certification type")
+    service_type_code: Optional[str] = Field(None, description="Healthcare service type code")
     
     # Service Information
-    procedure_codes: List[ProcedureCodeInfo] = Field(..., min_length=1)
-    diagnosis_codes: List[DiagnosisCodeInfo] = Field(..., min_length=1)
-    service_date_from: date
-    service_date_to: Optional[date] = None
-    units_requested: Optional[int] = Field(1, ge=1)
+    procedure_codes: List[ProcedureCodeInfo] = Field(..., description="List of procedure codes")
+    diagnosis_codes: List[DiagnosisCodeInfo] = Field(..., description="List of diagnosis codes")
+    service_date_from: date = Field(..., description="Service start date")
+    service_date_to: Optional[date] = Field(None, description="Service end date")
+    units_requested: Optional[int] = Field(1, description="Units requested")
     
     # Clinical Information
-    clinical_information: Optional[str] = Field(None, max_length=5000)
-    medical_necessity: str = Field(..., min_length=1, max_length=5000)
+    clinical_information: Optional[str] = Field(None, description="Clinical information")
+    medical_necessity: str = Field(..., description="Medical necessity statement")
     
     # Priority
-    priority: Priority = Priority.NORMAL
-    
-    @field_validator('requesting_provider_npi', 'servicing_provider_npi')
+    priority: Priority = Field(Priority.NORMAL, description="Request priority")
+
+    @field_validator('requesting_provider_npi')
     @classmethod
     def validate_npi(cls, v):
-        if v is not None:
-            if not v.isdigit() or len(v) != 10:
-                raise ValueError('NPI must be exactly 10 digits')
-        return v
-    
-    @field_validator('service_date_to')
-    @classmethod
-    def validate_service_dates(cls, v, info):
-        if v is not None and 'service_date_from' in info.data:
-            if v < info.data['service_date_from']:
-                raise ValueError('Service date to must be after service date from')
+        if not v.isdigit() or len(v) != 10:
+            raise ValueError('NPI must be exactly 10 digits')
         return v
 
 
 class PriorAuthorizationRequestCreate(PriorAuthorizationRequestBase):
-    """Schema for creating a new prior authorization request"""
     pass
 
 
 class PriorAuthorizationRequest(PriorAuthorizationRequestBase):
-    """Complete prior authorization request schema"""
-    id: int
-    request_id: str
-    patient_id: str
-    status: str
-    edi_278_content: str
-    
-    # Tracking Information
-    submitter_id: Optional[str] = None
-    receiver_id: Optional[str] = None
-    interchange_control_number: Optional[str] = None
-    group_control_number: Optional[str] = None
-    transaction_control_number: Optional[str] = None
-    
-    # Supporting Documentation
-    supporting_documentation: Optional[List[Dict[str, Any]]] = None
-    
-    # Timestamps
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    id: int = Field(..., description="Request ID")
+    request_id: str = Field(..., description="Unique request identifier")
+    patient_id: str = Field(..., description="Patient ID")
+    status: str = Field(..., description="Request status")
+    edi_278_content: str = Field(..., description="EDI 278 content")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     model_config = {"from_attributes": True}
 
 
 class AuthorizationDecision(BaseModel):
-    """Authorization decision schema"""
-    response_code: ResponseCode
-    authorization_number: Optional[str] = Field(None, max_length=50)
-    effective_date: Optional[date] = None
-    expiration_date: Optional[date] = None
-    units_approved: Optional[int] = Field(None, ge=0)
-    decision_reason: Optional[str] = Field(None, max_length=5000)
-    additional_information_required: Optional[str] = Field(None, max_length=5000)
-    
-    @field_validator('expiration_date')
-    @classmethod
-    def validate_expiration_date(cls, v, info):
-        if v is not None and 'effective_date' in info.data:
-            if info.data['effective_date'] and v <= info.data['effective_date']:
-                raise ValueError('Expiration date must be after effective date')
-        return v
+    response_code: ResponseCode = Field(..., description="Authorization response code")
+    authorization_number: Optional[str] = Field(None, description="Authorization number")
+    effective_date: Optional[date] = Field(None, description="Authorization effective date")
+    expiration_date: Optional[date] = Field(None, description="Authorization expiration date")
+    units_approved: Optional[int] = Field(None, description="Units approved")
+    decision_reason: Optional[str] = Field(None, description="Decision reason")
+    additional_information_required: Optional[str] = Field(None, description="Additional information required")
 
 
 class PriorAuthorizationResponse(BaseModel):
-    """Prior authorization response schema"""
-    id: int
-    request_id: str
-    response_code: ResponseCode
-    authorization_number: Optional[str] = None
-    effective_date: Optional[date] = None
-    expiration_date: Optional[date] = None
-    approved_services: Optional[Dict[str, Any]] = None
-    units_approved: Optional[int] = None
-    units_used: Optional[int] = None
-    decision_reason: Optional[str] = None
-    reviewer_name: Optional[str] = None
-    review_date: Optional[datetime] = None
-    additional_information_required: Optional[str] = None
-    follow_up_required: Optional[bool] = False
-    follow_up_date: Optional[date] = None
-    edi_278_response_content: str
-    processing_time_ms: Optional[int] = None
-    payer_id: Optional[str] = None
-    payer_name: Optional[str] = None
-    created_at: datetime
+    id: int = Field(..., description="Response ID")
+    request_id: str = Field(..., description="Associated request ID")
+    response_code: ResponseCode = Field(..., description="Response code")
+    authorization_number: Optional[str] = Field(None, description="Authorization number")
+    effective_date: Optional[date] = Field(None, description="Effective date")
+    expiration_date: Optional[date] = Field(None, description="Expiration date")
+    approved_services: Optional[Dict[str, Any]] = Field(None, description="Approved services details")
+    units_approved: Optional[int] = Field(None, description="Units approved")
+    decision_reason: Optional[str] = Field(None, description="Decision reason")
+    edi_278_response_content: str = Field(..., description="EDI 278 response content")
+    processing_time_ms: Optional[int] = Field(None, description="Processing time in milliseconds")
+    created_at: datetime = Field(..., description="Creation timestamp")
 
     model_config = {"from_attributes": True}
 
 
 class PriorAuthorizationInquiryResponse(BaseModel):
-    """EDI 278 inquiry response"""
-    request_id: str
-    edi_278: str
-    status: str
-    message: str
-    control_number: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    request_id: str = Field(..., description="Request ID")
+    edi_278: str = Field(..., description="EDI 278 content")
+    status: str = Field(..., description="Request status")
+    message: str = Field(..., description="Response message")
 
 
 class PriorAuthorizationDecisionResponse(BaseModel):
-    """EDI 278 decision response"""
-    request_id: str
-    edi_278_response: str
-    response_code: ResponseCode
-    authorization_number: Optional[str] = None
-    decision_details: Optional[Dict[str, Any]] = None
-    processed_at: datetime
-    control_number: Optional[str] = None
-
-
-class AuthorizationSearchRequest(BaseModel):
-    """Authorization search request schema"""
-    patient_name: Optional[str] = Field(None, max_length=200)
-    member_id: Optional[str] = Field(None, max_length=100)
-    provider_npi: Optional[str] = Field(None, min_length=10, max_length=10)
-    status: Optional[str] = Field(None, max_length=50)
-    service_date_from: Optional[date] = None
-    service_date_to: Optional[date] = None
-    created_from: Optional[datetime] = None
-    created_to: Optional[datetime] = None
-    priority: Optional[Priority] = None
+    request_id: str = Field(..., description="Request ID")
+    edi_278_response: str = Field(..., description="EDI 278 response content")
+    response_code: ResponseCode = Field(..., description="Response code")
+    authorization_number: Optional[str] = Field(None, description="Authorization number")
+    decision_details: Optional[Dict[str, Any]] = Field(None, description="Decision details")
+    processed_at: datetime = Field(..., description="Processing timestamp")
 
 
 class AuthorizationSummary(BaseModel):
     """Authorization summary for lists"""
-    id: int
-    request_id: str
-    patient_first_name: str
-    patient_last_name: str
-    member_id: str
-    requesting_provider_npi: str
-    status: str
-    priority: Priority
-    service_date_from: date
-    units_requested: Optional[int] = None
-    created_at: datetime
+    id: int = Field(..., description="Authorization ID")
+    request_id: str = Field(..., description="Request ID")
+    patient_first_name: str = Field(..., description="Patient first name")
+    patient_last_name: str = Field(..., description="Patient last name")
+    member_id: str = Field(..., description="Member ID")
+    requesting_provider_npi: str = Field(..., description="Requesting provider NPI")
+    status: str = Field(..., description="Request status")
+    priority: Priority = Field(..., description="Priority")
+    service_date_from: date = Field(..., description="Service start date")
+    units_requested: Optional[int] = Field(None, description="Units requested")
+    created_at: datetime = Field(..., description="Creation timestamp")
 
     model_config = {"from_attributes": True}
+
+
+class AuthorizationSearchRequest(BaseModel):
+    """Authorization search request schema"""
+    patient_name: Optional[str] = Field(None, description="Patient name")
+    member_id: Optional[str] = Field(None, description="Member ID")
+    provider_npi: Optional[str] = Field(None, description="Provider NPI")
+    status: Optional[str] = Field(None, description="Request status")
+    service_date_from: Optional[date] = Field(None, description="Service start date")
+    service_date_to: Optional[date] = Field(None, description="Service end date")
+    created_from: Optional[datetime] = Field(None, description="Created from date")
+    created_to: Optional[datetime] = Field(None, description="Created to date")
+    priority: Optional[Priority] = Field(None, description="Priority")

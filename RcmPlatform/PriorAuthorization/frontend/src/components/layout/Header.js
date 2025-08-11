@@ -14,7 +14,7 @@ const Header = () => {
             </h1>
           </div>
           <div className="text-sm text-gray-500">
-            Healthcare Authorization & Patient Information
+            Healthcare Authorization
           </div>
         </div>
       </div>

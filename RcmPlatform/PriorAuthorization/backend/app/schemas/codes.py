@@ -1,105 +1,77 @@
-# File: app/schemas/codes.py
-from typing import Optional
+# Healthcare Codes Schemas
 from pydantic import BaseModel, Field
+from typing import Optional, List
 from datetime import datetime
 
 
 class ServiceTypeCodeBase(BaseModel):
-    """Base service type code schema"""
-    code: str = Field(..., min_length=1, max_length=10)
-    description: str = Field(..., min_length=1, max_length=500)
-    category: Optional[str] = Field(None, max_length=100)
-    requires_authorization: bool = True
-    is_active: bool = True
+    code: str = Field(..., description="Service type code")
+    description: str = Field(..., description="Code description")
+    category: Optional[str] = Field(None, description="Code category")
+    requires_authorization: bool = Field(True, description="Whether authorization is required")
+    is_active: bool = Field(True, description="Whether code is active")
 
 
 class ServiceTypeCodeCreate(ServiceTypeCodeBase):
-    """Schema for creating service type code"""
     pass
 
 
-class ServiceTypeCodeUpdate(BaseModel):
-    """Schema for updating service type code"""
-    description: Optional[str] = Field(None, min_length=1, max_length=500)
-    category: Optional[str] = Field(None, max_length=100)
-    requires_authorization: Optional[bool] = None
-    is_active: Optional[bool] = None
-
-
 class ServiceTypeCode(ServiceTypeCodeBase):
-    """Complete service type code schema"""
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    id: int = Field(..., description="Code ID")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     model_config = {"from_attributes": True}
 
 
 class ProcedureCodeBase(BaseModel):
-    """Base procedure code schema"""
-    code: str = Field(..., min_length=1, max_length=20)
-    description: str = Field(..., min_length=1, max_length=500)
-    code_type: Optional[str] = Field(None, max_length=10)  # CPT, HCPCS
-    category: Optional[str] = Field(None, max_length=100)
-    requires_authorization: bool = False
-    is_active: bool = True
+    code: str = Field(..., description="CPT or HCPCS code")
+    description: str = Field(..., description="Code description")
+    code_type: Optional[str] = Field(None, description="Code type (CPT, HCPCS)")
+    category: Optional[str] = Field(None, description="Code category")
+    requires_authorization: bool = Field(False, description="Whether authorization is required")
+    is_active: bool = Field(True, description="Whether code is active")
 
 
 class ProcedureCodeCreate(ProcedureCodeBase):
-    """Schema for creating procedure code"""
     pass
 
 
-class ProcedureCodeUpdate(BaseModel):
-    """Schema for updating procedure code"""
-    description: Optional[str] = Field(None, min_length=1, max_length=500)
-    code_type: Optional[str] = Field(None, max_length=10)
-    category: Optional[str] = Field(None, max_length=100)
-    requires_authorization: Optional[bool] = None
-    is_active: Optional[bool] = None
-
-
 class ProcedureCode(ProcedureCodeBase):
-    """Complete procedure code schema"""
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    id: int = Field(..., description="Code ID")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     model_config = {"from_attributes": True}
 
 
 class DiagnosisCodeBase(BaseModel):
-    """Base diagnosis code schema"""
-    code: str = Field(..., min_length=1, max_length=20)
-    description: str = Field(..., min_length=1, max_length=500)
-    category: Optional[str] = Field(None, max_length=100)
-    is_active: bool = True
+    code: str = Field(..., description="ICD-10 diagnosis code")
+    description: str = Field(..., description="Code description")
+    category: Optional[str] = Field(None, description="Code category")
+    is_active: bool = Field(True, description="Whether code is active")
 
 
 class DiagnosisCodeCreate(DiagnosisCodeBase):
-    """Schema for creating diagnosis code"""
     pass
 
 
-class DiagnosisCodeUpdate(BaseModel):
-    """Schema for updating diagnosis code"""
-    description: Optional[str] = Field(None, min_length=1, max_length=500)
-    category: Optional[str] = Field(None, max_length=100)
-    is_active: Optional[bool] = None
-
-
 class DiagnosisCode(DiagnosisCodeBase):
-    """Complete diagnosis code schema"""
-    id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    id: int = Field(..., description="Code ID")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     model_config = {"from_attributes": True}
 
 
 class CodeSearchRequest(BaseModel):
-    """Code search request schema"""
-    search_term: Optional[str] = Field(None, max_length=255)
-    category: Optional[str] = Field(None, max_length=100)
-    active_only: bool = True
-    requires_authorization: Optional[bool] = None
+    query: str = Field(..., description="Search query")
+    code_type: Optional[str] = Field(None, description="Type of code to search")
+    limit: int = Field(10, description="Maximum number of results")
+    offset: int = Field(0, description="Number of results to skip")
+
+
+class CodeSearchResponse(BaseModel):
+    codes: List[ProcedureCode] = Field(..., description="Matching codes")
+    total: int = Field(..., description="Total number of matches")
+    query: str = Field(..., description="Search query used")

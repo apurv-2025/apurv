@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: insurancepass123
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -31,7 +31,7 @@ services:
       DATABASE_URL: postgresql://insuranceuser:insurancepass123@postgres:5432/health_insurance_preauth_db
       SECRET_KEY: BCPucohgb5sgE5-iK5wF30MyjGzwspJaryigw5dKwkw
     ports:
-      - "8000:8000"
+      - "8002:8000"
     depends_on:
       - postgres
     volumes:
@@ -39,7 +39,7 @@ services:
       - uploaded_files:/app/uploads
     networks:
       - agentic_practice_network
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   # Frontend React App
   frontend:
@@ -48,9 +48,9 @@ services:
       dockerfile: Dockerfile
     container_name: health_insurance_preauth_frontend
     ports:
-      - "3000:3000"
+      - "3002:3000"
     environment:
-      REACT_APP_API_URL: http://localhost:8000
+      REACT_APP_API_URL: http://localhost:8002
     volumes:
       - ./frontend:/app
       - /app/node_modules

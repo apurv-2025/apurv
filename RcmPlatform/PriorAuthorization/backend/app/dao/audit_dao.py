@@ -2,8 +2,8 @@
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from app.dao.base import BaseDAO
-from app.models.health_insurance import AuthorizationAudit
+from app.dao.base_dao import BaseDAO
+from app.models.models import AuthorizationAudit
 from datetime import datetime
 
 

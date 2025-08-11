@@ -1,9 +1,9 @@
 # File: app/services/enhanced_reporting_service.py
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
-from app.dao.enhanced_authorization_dao import EnhancedAuthorizationDAO
-from app.dao.enhanced_patient_dao import EnhancedPatientDAO
-from app.dao.enhanced_codes_dao import EnhancedCodesDAO
+from app.dao.prior_authorization_dao import EnhancedAuthorizationDAO
+from app.dao.patient_dao import EnhancedPatientDAO
+from app.dao.codes_dao import EnhancedCodesDAO
 from app.schemas.reports import ReportRequest, ReportResponse, ReportMetadata, ReportType
 from app.schemas.statistics import SystemStatistics
 from datetime import datetime, date

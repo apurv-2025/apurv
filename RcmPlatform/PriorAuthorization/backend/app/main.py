@@ -1,7 +1,7 @@
 # File: app/main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.api import api_router
+from app.api.api_v1.api import api_router
 from app.core.database import engine, Base
 import logging
 

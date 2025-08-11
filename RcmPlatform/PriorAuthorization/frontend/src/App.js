@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import PriorAuthorizationPage from './pages/PriorAuthorizationPage';
 import PatientInformationPage from './pages/PatientInformationPage';
 import HistoryPage from './pages/HistoryPage';
+import AIAssistantPage from './pages/AIAssistantPage';
+import AIAssistant from './components/AIAssistant';
 import './App.css';
 
 function App() {
@@ -18,10 +20,12 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/ai-assistant" element={<AIAssistantPage />} />
               <Route path="/prior-authorization" element={<PriorAuthorizationPage />} />
               <Route path="/patient-information" element={<PatientInformationPage />} />
               <Route path="/history" element={<HistoryPage />} />
             </Routes>
+            <AIAssistant />
           </Layout>
         </Router>
       </AuthorizationProvider>

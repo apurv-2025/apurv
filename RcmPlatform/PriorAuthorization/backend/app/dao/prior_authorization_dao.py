@@ -2,8 +2,8 @@
 from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc, func, text, case
-from app.dao.base import BaseDAO
-from app.models.health_insurance import (
+from app.dao.base_dao import BaseDAO
+from app.models.models import (
     PriorAuthorizationRequest, 
     PriorAuthorizationResponse,
     AuthorizationAudit

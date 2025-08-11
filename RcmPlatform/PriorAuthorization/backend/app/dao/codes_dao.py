@@ -2,8 +2,8 @@
 from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func, desc
-from app.dao.base import BaseDAO
-from app.models.health_insurance import ServiceTypeCode, ProcedureCode, DiagnosisCode
+from app.dao.base_dao import BaseDAO
+from app.models.models import ServiceTypeCode, ProcedureCode, DiagnosisCode
 from app.schemas.codes import CodeSearchRequest
 from datetime import datetime
 

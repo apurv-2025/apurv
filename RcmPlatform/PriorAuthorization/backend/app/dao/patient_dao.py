@@ -1,8 +1,8 @@
 from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func, text
-from app.dao.base import BaseDAO
-from app.models.health_insurance import PatientInformation
+from app.dao.base_dao import BaseDAO
+from app.models.models import PatientInformation
 from app.schemas.patient_information import (
     PatientSummary,
     PatientSearchRequest,
