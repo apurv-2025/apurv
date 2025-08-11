@@ -13,7 +13,7 @@ from .database import models
 from .schemas import claims as claim_schemas
 from .services.edi_parser import EDIParser
 from .services.claim_processor import ClaimProcessor
-from .api.routes import claims, payers, reports, agent
+from .api.routes import claims, payers, reports, agent, enhanced_claims
 from .agent.manager import get_agent_manager
 from .config import settings, agent_settings
 
@@ -40,6 +40,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(claims.router, prefix="/api/claims", tags=["claims"])
+app.include_router(enhanced_claims.router, prefix="/api/enhanced-claims", tags=["enhanced-claims"])
 app.include_router(payers.router, prefix="/api/payers", tags=["payers"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
