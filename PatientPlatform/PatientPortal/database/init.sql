@@ -96,6 +96,43 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create surveys table
+CREATE TABLE IF NOT EXISTS surveys (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    survey_type VARCHAR(50) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create survey_questions table
+CREATE TABLE IF NOT EXISTS survey_questions (
+    id SERIAL PRIMARY KEY,
+    survey_id INTEGER NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
+    question_text TEXT NOT NULL,
+    question_type VARCHAR(50) NOT NULL,
+    options JSONB,
+    required BOOLEAN DEFAULT TRUE,
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create survey_responses table
+CREATE TABLE IF NOT EXISTS survey_responses (
+    id SERIAL PRIMARY KEY,
+    survey_id INTEGER NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
+    conversation_id VARCHAR(255),
+    response_data JSONB NOT NULL,
+    overall_rating FLOAT CHECK (overall_rating >= 1 AND overall_rating <= 5),
+    feedback_text TEXT,
+    completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_doctors_email ON doctors(email);
@@ -107,6 +144,14 @@ CREATE INDEX IF NOT EXISTS idx_medications_prescriber_id ON medications(prescrib
 CREATE INDEX IF NOT EXISTS idx_lab_results_patient_id ON lab_results(patient_id);
 CREATE INDEX IF NOT EXISTS idx_messages_recipient_id ON messages(recipient_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_surveys_type ON surveys(survey_type);
+CREATE INDEX IF NOT EXISTS idx_surveys_active ON surveys(is_active);
+CREATE INDEX IF NOT EXISTS idx_survey_questions_survey_id ON survey_questions(survey_id);
+CREATE INDEX IF NOT EXISTS idx_survey_questions_order ON survey_questions(survey_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_survey_responses_survey_id ON survey_responses(survey_id);
+CREATE INDEX IF NOT EXISTS idx_survey_responses_user_id ON survey_responses(user_id);
+CREATE INDEX IF NOT EXISTS idx_survey_responses_appointment_id ON survey_responses(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_survey_responses_conversation_id ON survey_responses(conversation_id);
 
 -- Insert sample doctors
 INSERT INTO doctors (first_name, last_name, specialty, email, phone) VALUES
@@ -157,6 +202,50 @@ INSERT INTO messages (sender_id, recipient_id, subject, content, is_read) VALUES
 (4, 3, 'Surgery Preparation', 'Please review the pre-surgery instructions I sent you. Call if you have any questions.', false)
 ON CONFLICT DO NOTHING;
 
+-- Insert sample surveys
+INSERT INTO surveys (title, description, survey_type, is_active) VALUES
+('Visit Experience Survey', 'Please share your experience with your recent visit', 'visit', true),
+('AI Assistant Experience Survey', 'Please share your experience with our AI health assistant', 'ai_chat', true),
+('General Patient Satisfaction Survey', 'Help us improve our services by providing feedback', 'general', true)
+ON CONFLICT DO NOTHING;
+
+-- Insert sample survey questions for visit survey
+INSERT INTO survey_questions (survey_id, question_text, question_type, options, required, order_index) VALUES
+(1, 'How would you rate your overall experience?', 'rating', NULL, true, 1),
+(1, 'How satisfied were you with the doctor''s care?', 'rating', NULL, true, 2),
+(1, 'How satisfied were you with the wait time?', 'rating', NULL, true, 3),
+(1, 'How satisfied were you with the staff?', 'rating', NULL, true, 4),
+(1, 'Would you recommend this doctor to others?', 'yes_no', NULL, true, 5),
+(1, 'Please share any additional comments or suggestions:', 'text', NULL, false, 6)
+ON CONFLICT DO NOTHING;
+
+-- Insert sample survey questions for AI chat survey
+INSERT INTO survey_questions (survey_id, question_text, question_type, options, required, order_index) VALUES
+(2, 'How helpful was the AI assistant?', 'rating', NULL, true, 1),
+(2, 'How satisfied were you with the response time?', 'rating', NULL, true, 2),
+(2, 'How accurate were the AI assistant''s responses?', 'rating', NULL, true, 3),
+(2, 'How easy was it to understand the AI assistant''s responses?', 'rating', NULL, true, 4),
+(2, 'Did the AI assistant solve your problem?', 'yes_no', NULL, true, 5),
+(2, 'Would you use the AI assistant again?', 'yes_no', NULL, true, 6),
+(2, 'Please share any additional feedback:', 'text', NULL, false, 7)
+ON CONFLICT DO NOTHING;
+
+-- Insert sample survey questions for general survey
+INSERT INTO survey_questions (survey_id, question_text, question_type, options, required, order_index) VALUES
+(3, 'How satisfied are you with our patient portal?', 'rating', NULL, true, 1),
+(3, 'How likely are you to recommend our services?', 'rating', NULL, true, 2),
+(3, 'What is your preferred method of communication?', 'multiple_choice', '["Email", "Phone", "Text", "Portal"]', true, 3),
+(3, 'How would you rate our appointment scheduling process?', 'rating', NULL, true, 4),
+(3, 'Please share any suggestions for improvement:', 'text', NULL, false, 5)
+ON CONFLICT DO NOTHING;
+
+-- Insert sample survey responses
+INSERT INTO survey_responses (survey_id, user_id, appointment_id, response_data, overall_rating, feedback_text) VALUES
+(1, 1, 1, '{"1": 4, "2": 5, "3": 3, "4": 4, "5": true, "6": "Great experience overall!"}', 4.0, 'Great experience overall!'),
+(2, 1, NULL, '{"1": 5, "2": 4, "3": 5, "4": 4, "5": true, "6": true, "7": "Very helpful AI assistant"}', 4.5, 'Very helpful AI assistant'),
+(3, 2, NULL, '{"1": 4, "2": 4, "3": "Email", "4": 4, "5": "Keep up the good work!"}', 4.0, 'Keep up the good work!')
+ON CONFLICT DO NOTHING;
+
 -- Create a function to update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -170,6 +259,7 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_appointments_updated_at BEFORE UPDATE ON appointments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_medications_updated_at BEFORE UPDATE ON medications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_surveys_updated_at BEFORE UPDATE ON surveys FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Grant permissions (adjust as needed for your setup)
 -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO healthcare_user;

@@ -4,6 +4,7 @@ from .appointment import Appointment
 from .medication import Medication
 from .lab_result import LabResult
 from .message import Message
+from .survey import Survey, SurveyQuestion, SurveyResponse
 from ..database import Base
 
 __all__ = [
@@ -13,5 +14,8 @@ __all__ = [
     "Appointment",
     "Medication",
     "LabResult",
-    "Message"
+    "Message",
+    "Survey",
+    "SurveyQuestion",
+    "SurveyResponse"
 ] 

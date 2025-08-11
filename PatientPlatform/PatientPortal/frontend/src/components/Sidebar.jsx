@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Heart, Activity, Calendar, Pill, TestTube, Mail, User, Settings, LogOut, Bot, Zap, Brain,
-  CreditCard, Folder, Upload, Video, HelpCircle
+  CreditCard, Folder, Upload, Video, HelpCircle, BarChart3
 } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
@@ -17,6 +17,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'telehealth', label: 'Telehealth', icon: Video },
     { id: 'fitness', label: 'Fitness', icon: Zap },
     { id: 'wellness', label: 'Wellness', icon: Brain },
+    { id: 'surveys', label: 'Survey Management', icon: BarChart3 },
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'help', label: 'Help', icon: HelpCircle }

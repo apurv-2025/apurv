@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine
 from . import models
 from .config import settings
-from .routers import auth, users, appointments, medications, lab_results, messages, agent, fitness, wellness, records, billing, forms, telehealth
+from .routers import auth, users, appointments, medications, lab_results, messages, agent, fitness, wellness, records, billing, forms, telehealth, surveys
 from .routers import settings as settings_router
 
 # Create database tables
@@ -34,6 +34,7 @@ app.include_router(billing.router)
 app.include_router(forms.router)
 app.include_router(telehealth.router)
 app.include_router(settings_router.router)
+app.include_router(surveys.router)
 app.include_router(agent.router, prefix="/agent", tags=["AI Agent"])
 
 @app.get("/")

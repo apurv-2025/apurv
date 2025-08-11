@@ -25,7 +25,7 @@ services:
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       - postgres
     volumes:
@@ -48,7 +48,7 @@ services:
     networks:
       - healthcare_network
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_API_URL=http://localhost:8001
 
 volumes:
   postgres_data:

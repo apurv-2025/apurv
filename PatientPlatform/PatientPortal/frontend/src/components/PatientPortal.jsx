@@ -18,6 +18,7 @@ import Billing from './Billing';
 import FormsUploads from './FormsUploads';
 import Telehealth from './Telehealth';
 import Help from './Help';
+import SurveyManagement from './SurveyManagement';
 import { useAuth } from '../contexts/AuthContext';
 
 const PatientPortal = () => {
@@ -67,6 +68,8 @@ const PatientPortal = () => {
         return <Fitness />;
       case 'wellness':
         return <Wellness />;
+      case 'surveys':
+        return <SurveyManagement />;
       case 'agent':
         return <Agent />;
       case 'profile':
