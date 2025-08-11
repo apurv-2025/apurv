@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Claims Service
+  claims-db:
+    image: postgres:17-alpine
+    container_name: claims-integrated-db
+    environment:
+      POSTGRES_DB: fhir_claims_db
+      POSTGRES_USER: fhir_user
+      POSTGRES_PASSWORD: fhir_password_2024!
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - claims_postgres_data:/var/lib/postgresql/data
+      - ../../../../HealthcareFoundation/CoreServices/Claims/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - claims-integrated-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fhir_user -d fhir_claims_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Claims Service Backend (FHIR-compliant)
+  claims-service:
+    build:
+      context: ../../../../HealthcareFoundation/CoreServices/Claims
+      dockerfile: backend/Dockerfile
+    container_name: claims-service-backend
+    environment:
+      DATABASE_URL: postgresql://fhir_user:fhir_password_2024!@claims-db:5432/fhir_claims_db
+      DATABASE_HOST: claims-db
+      DATABASE_PORT: 5432
+      SECRET_KEY: your-super-secret-key-change-in-production
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://claims-anomaly-frontend"
+      LOG_LEVEL: info
+      ENVIRONMENT: development
+    volumes:
+      - ../../../../HealthcareFoundation/CoreServices/Claims:/app:ro
+      - claims_service_logs:/app/logs
+    ports:
+      - "8001:8000"  # Claims Service on port 8001
+    networks:
+      - claims-integrated-network
+    depends_on:
+      claims-db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ClaimsAnomaly API (ML Anomaly Detection)
+  claims-anomaly-api:
+    build: .
+    container_name: claims-anomaly-api
+    ports:
+      - "8000:8000"  # ClaimsAnomaly on port 8000
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+      - CLAIMS_SERVICE_URL=http://claims-service:8000  # Internal service communication
+      - CLAIMS_SERVICE_BASE_URL=http://localhost:8001  # External access
+    restart: unless-stopped
+    depends_on:
+      - claims-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - claims-integrated-network
+
+  # Claims Service Frontend
+  claims-service-frontend:
+    build:
+      context: ../../../../HealthcareFoundation/CoreServices/Claims/frontend
+      dockerfile: Dockerfile
+    container_name: claims-service-frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:8001
+      REACT_APP_ENVIRONMENT: development
+      REACT_APP_VERSION: 1.0.0
+    ports:
+      - "3000:80"  # Claims Service Frontend on port 3000
+    networks:
+      - claims-integrated-network
+    depends_on:
+      - claims-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ClaimsAnomaly Frontend
+  claims-anomaly-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: claims-anomaly-frontend
+    ports:
+      - "3001:3000"  # ClaimsAnomaly Frontend on port 3001
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - claims-anomaly-api
+    restart: unless-stopped
+    networks:
+      - claims-integrated-network
+
+networks:
+  claims-integrated-network:
+    driver: bridge
+
+volumes:
+  claims_postgres_data:
+  claims_service_logs: 
