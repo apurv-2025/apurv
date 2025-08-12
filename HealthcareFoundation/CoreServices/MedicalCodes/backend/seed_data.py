@@ -30,6 +30,22 @@ def seed_database():
             CPTCode(code="99213", description="Office or other outpatient visit for the evaluation and management of an established patient, expanded problem focused", category="Category I", section="Evaluation and Management", subsection="Office or Other Outpatient Services"),
             CPTCode(code="99215", description="Office or other outpatient visit for the evaluation and management of an established patient, comprehensive", category="Category I", section="Evaluation and Management", subsection="Office or Other Outpatient Services"),
             
+            # Category I - Psychiatry and Mental Health Services
+            CPTCode(code="90791", description="Psychiatric diagnostic evaluation", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90792", description="Psychiatric diagnostic evaluation with medical services", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90832", description="Psychotherapy, 30 minutes with patient", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90834", description="Psychotherapy, 45 minutes with patient", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90837", description="Psychotherapy, 60 minutes with patient", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90853", description="Group psychotherapy (other than of a multiple-family group)", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90863", description="Pharmacologic management, including prescription and review of medication, when performed with psychotherapy services", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90875", description="Individual psychophysiological therapy incorporating biofeedback training by any modality (face-to-face with the patient), with psychotherapy", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90880", description="Hypnotherapy", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90882", description="Environmental intervention for medical management purposes on a psychiatric patient's behalf with agencies, employers, or institutions", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90885", description="Psychiatric evaluation of hospital records, other psychiatric reports, psychometric and/or projective tests, and other accumulated data for medical diagnostic purposes", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90887", description="Interpretation or explanation of results of psychiatric, other medical examinations and procedures, or other accumulated data to family or other responsible persons, or advising them how to assist patient", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90889", description="Preparation of report of patient's psychiatric status, history, treatment, or progress (other than for legal or consultative purposes) for other physicians, agencies, or insurance carriers", category="Category I", section="Medicine", subsection="Psychiatry"),
+            CPTCode(code="90899", description="Unlisted psychiatric service or procedure", category="Category I", section="Medicine", subsection="Psychiatry"),
+            
             # Category I - Surgery
             CPTCode(code="10021", description="Fine needle aspiration; without imaging guidance", category="Category I", section="Surgery", subsection="Integumentary System"),
             CPTCode(code="27447", description="Arthroplasty, knee, condyle and plateau; medial OR lateral compartment", category="Category I", section="Surgery", subsection="Musculoskeletal System"),
@@ -66,13 +82,34 @@ def seed_database():
         
         # Sample ICD-10 Codes
         icd10_codes = [
-            # Diagnosis codes
+            # Mental Health Diagnosis codes
+            ICD10Code(code="F32.0", description="Major depressive disorder, single episode, mild", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F32.1", description="Major depressive disorder, single episode, moderate", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F32.2", description="Major depressive disorder, single episode, severe without psychotic features", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F32.9", description="Major depressive disorder, single episode, unspecified", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F33.0", description="Major depressive disorder, recurrent, mild", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F33.1", description="Major depressive disorder, recurrent, moderate", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F33.2", description="Major depressive disorder, recurrent, severe without psychotic features", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F41.0", description="Panic disorder [episodic paroxysmal anxiety] without agoraphobia", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F41.1", description="Generalized anxiety disorder", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F41.9", description="Anxiety disorder, unspecified", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F43.10", description="Post-traumatic stress disorder, unspecified", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F43.11", description="Post-traumatic stress disorder, acute", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F43.12", description="Post-traumatic stress disorder, chronic", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F60.3", description="Emotionally unstable personality disorder", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F60.9", description="Personality disorder, unspecified", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F90.0", description="Attention-deficit hyperactivity disorder, predominantly inattentive type", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F90.1", description="Attention-deficit hyperactivity disorder, predominantly hyperactive type", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="F90.9", description="Attention-deficit hyperactivity disorder, unspecified type", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
+            ICD10Code(code="Z63.0", description="Problems in relationship with spouse or partner", code_type="Diagnosis", chapter="Factors influencing health status and contact with health services", is_billable="Y"),
+            ICD10Code(code="Z63.8", description="Other specified problems related to primary support group", code_type="Diagnosis", chapter="Factors influencing health status and contact with health services", is_billable="Y"),
+            
+            # Other Diagnosis codes
             ICD10Code(code="A09", description="Infectious gastroenteritis and colitis, unspecified", code_type="Diagnosis", chapter="Certain infectious and parasitic diseases", is_billable="Y"),
             ICD10Code(code="B99.9", description="Unspecified infectious disease", code_type="Diagnosis", chapter="Certain infectious and parasitic diseases", is_billable="Y"),
             ICD10Code(code="C78.1", description="Secondary malignant neoplasm of mediastinum", code_type="Diagnosis", chapter="Neoplasms", is_billable="Y"),
             ICD10Code(code="D50.9", description="Iron deficiency anemia, unspecified", code_type="Diagnosis", chapter="Diseases of the blood and blood-forming organs", is_billable="Y"),
             ICD10Code(code="E11.9", description="Type 2 diabetes mellitus without complications", code_type="Diagnosis", chapter="Endocrine, nutritional and metabolic diseases", is_billable="Y"),
-            ICD10Code(code="F32.9", description="Major depressive disorder, single episode, unspecified", code_type="Diagnosis", chapter="Mental, Behavioral and Neurodevelopmental disorders", is_billable="Y"),
             ICD10Code(code="G93.1", description="Anoxic brain damage, not elsewhere classified", code_type="Diagnosis", chapter="Diseases of the nervous system", is_billable="Y"),
             ICD10Code(code="H10.9", description="Unspecified conjunctivitis", code_type="Diagnosis", chapter="Diseases of the eye and adnexa", is_billable="Y"),
             ICD10Code(code="I10", description="Essential (primary) hypertension", code_type="Diagnosis", chapter="Diseases of the circulatory system", is_billable="Y"),
@@ -91,6 +128,24 @@ def seed_database():
         
         # Sample HCPCS Codes
         hcpcs_codes = [
+            # Mental Health Services
+            HCPCSCode(code="H0001", description="Behavioral health screening to determine eligibility for admission to treatment program", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0002", description="Behavioral health counseling and therapy, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0004", description="Behavioral health prevention program, non-physician provider, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0005", description="Behavioral health day treatment, partial hospitalization, per diem", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0006", description="Behavioral health short-term residential, non-hospital residential treatment program, per diem", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0007", description="Behavioral health long-term residential, non-hospital residential treatment program, per diem", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0008", description="Behavioral health clinic visit, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0009", description="Behavioral health case management, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0010", description="Behavioral health peer support services, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0011", description="Behavioral health crisis intervention, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0012", description="Behavioral health family psychoeducation, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0013", description="Behavioral health medication training and support, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0014", description="Behavioral health supported employment, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0015", description="Behavioral health supported housing, per 15 minutes", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0016", description="Behavioral health intensive outpatient treatment, per diem", level="Level II", category="Mental Health Services"),
+            HCPCSCode(code="H0017", description="Behavioral health assertive community treatment, per diem", level="Level II", category="Mental Health Services"),
+            
             # Durable Medical Equipment
             HCPCSCode(code="E0424", description="Stationary compressed gaseous oxygen system, rental; includes container, contents, regulator, flowmeter, humidifier, nebulizer, cannula or mask, and tubing", level="Level II", category="Durable Medical Equipment"),
             HCPCSCode(code="E0470", description="Respiratory assist device, bi-level pressure capability, without backup rate feature, used with noninvasive interface", level="Level II", category="Durable Medical Equipment"),
@@ -125,6 +180,16 @@ def seed_database():
             ModifierCode(modifier="81", description="Minimum assistant surgeon", category="Surgery", applies_to="Surgical procedures"),
             ModifierCode(modifier="82", description="Assistant surgeon (when qualified resident surgeon not available)", category="Surgery", applies_to="Surgical procedures"),
             ModifierCode(modifier="95", description="Synchronous telemedicine service rendered via real-time interactive audio and video telecommunications system", category="Telemedicine", applies_to="E/M services"),
+            ModifierCode(modifier="GT", description="Via interactive audio and video telecommunication systems", category="Telemedicine", applies_to="Mental health services"),
+            ModifierCode(modifier="GQ", description="Via asynchronous telecommunications system", category="Telemedicine", applies_to="Mental health services"),
+            ModifierCode(modifier="GZ", description="Item or service expected to be denied as not reasonable and necessary", category="Medical Necessity", applies_to="All services"),
+            ModifierCode(modifier="GY", description="Item or service statutorily excluded or does not meet the definition of any Medicare benefit", category="Medical Necessity", applies_to="All services"),
+            ModifierCode(modifier="GA", description="Waiver of liability statement issued as required by payer policy, individual case", category="Medical Necessity", applies_to="All services"),
+            ModifierCode(modifier="GX", description="Notice of liability issued, voluntary under payer policy", category="Medical Necessity", applies_to="All services"),
+            ModifierCode(modifier="GZ", description="Item or service expected to be denied as not reasonable and necessary", category="Medical Necessity", applies_to="All services"),
+            ModifierCode(modifier="HA", description="Child/adolescent program", category="Mental Health", applies_to="Mental health services"),
+            ModifierCode(modifier="HB", description="Adult program, non-geriatric", category="Mental Health", applies_to="Mental health services"),
+            ModifierCode(modifier="HC", description="Adult program, geriatric", category="Mental Health", applies_to="Mental health services"),
         ]
         
         # Add all codes to database

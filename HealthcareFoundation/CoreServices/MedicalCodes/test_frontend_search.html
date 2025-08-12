@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Codes Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .result { margin: 10px 0; padding: 10px; background-color: #f8f9fa; border-radius: 3px; }
+        button { padding: 10px 20px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Medical Codes Search Test</h1>
+    
+    <div class="test-section">
+        <h2>🔍 Test Search Functionality</h2>
+        <input type="text" id="searchInput" placeholder="Enter search term (e.g., 90791, psychiatry)" value="90791">
+        <button onclick="testSearch()">Test Search</button>
+        <div id="searchResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Quick Tests</h2>
+        <button onclick="testExactCode()">Test Exact Code (90791)</button>
+        <button onclick="testSpecialty()">Test Specialty (psychiatry)</button>
+        <button onclick="testKeyword()">Test Keyword (mental health)</button>
+        <div id="quickTestResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 API Health Check</h2>
+        <button onclick="testAPIHealth()">Check API Health</button>
+        <div id="healthResult"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8003/api';
+
+        async function testSearch() {
+            const query = document.getElementById('searchInput').value;
+            const resultDiv = document.getElementById('searchResult');
+            
+            try {
+                resultDiv.innerHTML = '<p>Searching...</p>';
+                const response = await fetch(`${API_BASE}/comprehensive/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Search Successful</h3>
+                            <p><strong>Query:</strong> ${data.query}</p>
+                            <p><strong>Total Results:</strong> ${data.total_results}</p>
+                            <p><strong>CPT Codes:</strong> ${data.results.cpt_codes?.length || 0}</p>
+                            <p><strong>ICD-10 Codes:</strong> ${data.results.icd10_codes?.length || 0}</p>
+                            <p><strong>HCPCS Codes:</strong> ${data.results.hcpcs_codes?.length || 0}</p>
+                            ${data.results.cpt_codes?.length > 0 ? `<p><strong>First CPT Code:</strong> ${data.results.cpt_codes[0].code} - ${data.results.cpt_codes[0].description}</p>` : ''}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error"><p>❌ Search failed</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error"><p>❌ Error: ${error.message}</p></div>`;
+            }
+        }
+
+        async function testExactCode() {
+            const resultDiv = document.getElementById('quickTestResult');
+            try {
+                const response = await fetch(`${API_BASE}/comprehensive/search?query=90791`);
+                const data = await response.json();
+                
+                if (data.success && data.total_results > 0) {
+                    resultDiv.innerHTML = `<div class="result success">✅ Found CPT code 90791: ${data.results.cpt_codes[0].description}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ CPT code 90791 not found</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testSpecialty() {
+            const resultDiv = document.getElementById('quickTestResult');
+            try {
+                const response = await fetch(`${API_BASE}/comprehensive/search?query=psychiatry`);
+                const data = await response.json();
+                
+                if (data.success && data.total_results > 0) {
+                    resultDiv.innerHTML = `<div class="result success">✅ Found ${data.total_results} psychiatry-related codes</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ No psychiatry codes found</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testKeyword() {
+            const resultDiv = document.getElementById('quickTestResult');
+            try {
+                const response = await fetch(`${API_BASE}/comprehensive/search?query=mental%20health`);
+                const data = await response.json();
+                
+                if (data.success && data.total_results > 0) {
+                    resultDiv.innerHTML = `<div class="result success">✅ Found ${data.total_results} mental health codes</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ No mental health codes found</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testAPIHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="result success">✅ API is healthy: ${data.status}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ API health check failed</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ API not reachable: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            testAPIHealth();
+        };
+    </script>
+</body>
+</html> 

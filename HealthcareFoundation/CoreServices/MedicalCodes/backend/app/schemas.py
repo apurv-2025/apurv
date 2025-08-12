@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 class CPTCodeResponse(BaseModel):
@@ -72,4 +72,44 @@ class StatsResponse(BaseModel):
     total_modifier_codes: int
     active_cpt_codes: int
     active_icd10_codes: int
-    active_hcpcs_codes: int 
+    active_hcpcs_codes: int
+
+# New schemas for data synchronization
+class SyncStatusResponse(BaseModel):
+    status: str
+    last_sync: str
+    sources: Dict[str, Any]
+    message: str
+
+class SyncResultResponse(BaseModel):
+    success: bool
+    message: str
+    task_id: str
+    status: str
+
+class ScrapedDataResponse(BaseModel):
+    success: bool
+    message: str
+    filename: Optional[str]
+    cpt_codes_count: int
+    icd10_codes_count: int
+    hcpcs_codes_count: int
+    total_codes: int
+
+class OfficialSourceInfo(BaseModel):
+    name: str
+    url: str
+    description: str
+    type: str
+    maintainer: str
+
+class SourcesResponse(BaseModel):
+    sources: Dict[str, OfficialSourceInfo]
+    total_sources: int
+    last_updated: str
+
+class SyncHealthResponse(BaseModel):
+    status: str
+    timestamp: str
+    sources_status: Dict[str, str]
+    service: str 

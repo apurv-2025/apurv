@@ -1,0 +1,742 @@
+{
+  "cpt_codes": [
+    {
+      "code": "90791",
+      "description": "Psychiatric diagnostic evaluation",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90792",
+      "description": "Psychiatric diagnostic evaluation with medical services",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90832",
+      "description": "Psychotherapy, 30 minutes with patient",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90834",
+      "description": "Psychotherapy, 45 minutes with patient",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90837",
+      "description": "Psychotherapy, 60 minutes with patient",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90853",
+      "description": "Group psychotherapy (other than of a multiple-family group)",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90863",
+      "description": "Pharmacologic management, including prescription and review of medication, when performed with psychotherapy services",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90875",
+      "description": "Individual psychophysiological therapy incorporating biofeedback training by any modality (face-to-face with the patient), with psychotherapy",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90880",
+      "description": "Hypnotherapy",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90882",
+      "description": "Environmental intervention for medical management purposes on a psychiatric patient's behalf with agencies, employers, or institutions",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90885",
+      "description": "Psychiatric evaluation of hospital records, other psychiatric reports, psychometric and/or projective tests, and other accumulated data for medical diagnostic purposes",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90887",
+      "description": "Interpretation or explanation of results of psychiatric, other medical examinations and procedures, or other accumulated data to family or other responsible persons, or advising them how to assist patient",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90889",
+      "description": "Preparation of report of patient's psychiatric status, history, treatment, or progress (other than for legal or consultative purposes) for other physicians, agencies, or insurance carriers",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "90899",
+      "description": "Unlisted psychiatric service or procedure",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Psychiatry",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "99201",
+      "description": "Office or other outpatient visit for the evaluation and management of a new patient, which requires these 3 key components: A problem focused history; A problem focused examination; Straightforward medical decision making",
+      "category": "Category I",
+      "section": "Evaluation and Management",
+      "subsection": "Office or Other Outpatient Services",
+      "specialty": "Primary Care"
+    },
+    {
+      "code": "99202",
+      "description": "Office or other outpatient visit for the evaluation and management of a new patient, which requires these 3 key components: An expanded problem focused history; An expanded problem focused examination; Straightforward medical decision making",
+      "category": "Category I",
+      "section": "Evaluation and Management",
+      "subsection": "Office or Other Outpatient Services",
+      "specialty": "Primary Care"
+    },
+    {
+      "code": "99203",
+      "description": "Office or other outpatient visit for the evaluation and management of a new patient, which requires these 3 key components: A detailed history; A detailed examination; Low complexity medical decision making",
+      "category": "Category I",
+      "section": "Evaluation and Management",
+      "subsection": "Office or Other Outpatient Services",
+      "specialty": "Primary Care"
+    },
+    {
+      "code": "99204",
+      "description": "Office or other outpatient visit for the evaluation and management of a new patient, which requires these 3 key components: A comprehensive history; A comprehensive examination; Moderate complexity medical decision making",
+      "category": "Category I",
+      "section": "Evaluation and Management",
+      "subsection": "Office or Other Outpatient Services",
+      "specialty": "Primary Care"
+    },
+    {
+      "code": "99205",
+      "description": "Office or other outpatient visit for the evaluation and management of a new patient, which requires these 3 key components: A comprehensive history; A comprehensive examination; High complexity medical decision making",
+      "category": "Category I",
+      "section": "Evaluation and Management",
+      "subsection": "Office or Other Outpatient Services",
+      "specialty": "Primary Care"
+    },
+    {
+      "code": "10021",
+      "description": "Fine needle aspiration; without imaging guidance",
+      "category": "Category I",
+      "section": "Surgery",
+      "subsection": "Integumentary System",
+      "specialty": "Surgery"
+    },
+    {
+      "code": "27447",
+      "description": "Arthroplasty, knee, condyle and plateau; medial OR lateral compartment",
+      "category": "Category I",
+      "section": "Surgery",
+      "subsection": "Musculoskeletal System",
+      "specialty": "Orthopedics"
+    },
+    {
+      "code": "36415",
+      "description": "Collection of venous blood by venipuncture",
+      "category": "Category I",
+      "section": "Surgery",
+      "subsection": "Cardiovascular System",
+      "specialty": "Cardiology"
+    },
+    {
+      "code": "43239",
+      "description": "Esophagogastroduodenoscopy, flexible, transoral; with biopsy, single or multiple",
+      "category": "Category I",
+      "section": "Surgery",
+      "subsection": "Digestive System",
+      "specialty": "Gastroenterology"
+    },
+    {
+      "code": "70450",
+      "description": "Computed tomography, head or brain; without contrast material",
+      "category": "Category I",
+      "section": "Radiology",
+      "subsection": "Diagnostic Radiology",
+      "specialty": "Radiology"
+    },
+    {
+      "code": "71020",
+      "description": "Radiologic examination, chest, 2 views, frontal and lateral",
+      "category": "Category I",
+      "section": "Radiology",
+      "subsection": "Diagnostic Radiology",
+      "specialty": "Radiology"
+    },
+    {
+      "code": "73721",
+      "description": "Magnetic resonance (eg, proton) imaging, any joint of lower extremity; without contrast material",
+      "category": "Category I",
+      "section": "Radiology",
+      "subsection": "Diagnostic Radiology",
+      "specialty": "Radiology"
+    },
+    {
+      "code": "80053",
+      "description": "Comprehensive metabolic panel",
+      "category": "Category I",
+      "section": "Pathology and Laboratory",
+      "subsection": "Chemistry",
+      "specialty": "Pathology"
+    },
+    {
+      "code": "85025",
+      "description": "Blood count; complete (CBC), automated (Hgb, Hct, RBC, WBC and platelet count) and automated differential WBC count",
+      "category": "Category I",
+      "section": "Pathology and Laboratory",
+      "subsection": "Hematology and Coagulation",
+      "specialty": "Pathology"
+    },
+    {
+      "code": "87804",
+      "description": "Infectious agent antigen detection by immunoassay with direct optical observation; influenza",
+      "category": "Category I",
+      "section": "Pathology and Laboratory",
+      "subsection": "Microbiology",
+      "specialty": "Pathology"
+    },
+    {
+      "code": "90471",
+      "description": "Immunization administration (includes percutaneous, intradermal, subcutaneous, or intramuscular injections); 1 vaccine (single or combination vaccine/toxoid)",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Immune Globulins, Serum or Recombinant Products",
+      "specialty": "Primary Care"
+    },
+    {
+      "code": "93000",
+      "description": "Electrocardiogram, routine ECG with at least 12 leads; with interpretation and report",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Cardiovascular",
+      "specialty": "Cardiology"
+    },
+    {
+      "code": "94760",
+      "description": "Noninvasive ear or pulse oximetry for oxygen saturation; single determination",
+      "category": "Category I",
+      "section": "Medicine",
+      "subsection": "Pulmonary",
+      "specialty": "Pulmonology"
+    }
+  ],
+  "icd10_codes": [
+    {
+      "code": "F32.0",
+      "description": "Major depressive disorder, single episode, mild",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F32.1",
+      "description": "Major depressive disorder, single episode, moderate",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F32.2",
+      "description": "Major depressive disorder, single episode, severe without psychotic features",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F32.9",
+      "description": "Major depressive disorder, single episode, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F33.0",
+      "description": "Major depressive disorder, recurrent, mild",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F33.1",
+      "description": "Major depressive disorder, recurrent, moderate",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F33.2",
+      "description": "Major depressive disorder, recurrent, severe without psychotic features",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F41.0",
+      "description": "Panic disorder [episodic paroxysmal anxiety] without agoraphobia",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F41.1",
+      "description": "Generalized anxiety disorder",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F41.9",
+      "description": "Anxiety disorder, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F43.10",
+      "description": "Post-traumatic stress disorder, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F43.11",
+      "description": "Post-traumatic stress disorder, acute",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F43.12",
+      "description": "Post-traumatic stress disorder, chronic",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F60.3",
+      "description": "Emotionally unstable personality disorder",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F60.9",
+      "description": "Personality disorder, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F90.0",
+      "description": "Attention-deficit hyperactivity disorder, predominantly inattentive type",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F90.1",
+      "description": "Attention-deficit hyperactivity disorder, predominantly hyperactive type",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "F90.9",
+      "description": "Attention-deficit hyperactivity disorder, unspecified type",
+      "code_type": "Diagnosis",
+      "chapter": "Mental, Behavioral and Neurodevelopmental disorders",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "Z63.0",
+      "description": "Problems in relationship with spouse or partner",
+      "code_type": "Diagnosis",
+      "chapter": "Factors influencing health status and contact with health services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "Z63.8",
+      "description": "Other specified problems related to primary support group",
+      "code_type": "Diagnosis",
+      "chapter": "Factors influencing health status and contact with health services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "A09",
+      "description": "Infectious gastroenteritis and colitis, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Certain infectious and parasitic diseases",
+      "specialty": "Infectious Disease"
+    },
+    {
+      "code": "B99.9",
+      "description": "Unspecified infectious disease",
+      "code_type": "Diagnosis",
+      "chapter": "Certain infectious and parasitic diseases",
+      "specialty": "Infectious Disease"
+    },
+    {
+      "code": "C78.1",
+      "description": "Secondary malignant neoplasm of mediastinum",
+      "code_type": "Diagnosis",
+      "chapter": "Neoplasms",
+      "specialty": "Oncology"
+    },
+    {
+      "code": "D50.9",
+      "description": "Iron deficiency anemia, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the blood and blood-forming organs",
+      "specialty": "Hematology"
+    },
+    {
+      "code": "E11.9",
+      "description": "Type 2 diabetes mellitus without complications",
+      "code_type": "Diagnosis",
+      "chapter": "Endocrine, nutritional and metabolic diseases",
+      "specialty": "Endocrinology"
+    },
+    {
+      "code": "G93.1",
+      "description": "Anoxic brain damage, not elsewhere classified",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the nervous system",
+      "specialty": "Neurology"
+    },
+    {
+      "code": "H10.9",
+      "description": "Unspecified conjunctivitis",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the eye and adnexa",
+      "specialty": "Ophthalmology"
+    },
+    {
+      "code": "I10",
+      "description": "Essential (primary) hypertension",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the circulatory system",
+      "specialty": "Cardiology"
+    },
+    {
+      "code": "J44.1",
+      "description": "Chronic obstructive pulmonary disease with acute exacerbation",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the respiratory system",
+      "specialty": "Pulmonology"
+    },
+    {
+      "code": "K59.00",
+      "description": "Constipation, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the digestive system",
+      "specialty": "Gastroenterology"
+    },
+    {
+      "code": "L30.9",
+      "description": "Dermatitis, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the skin and subcutaneous tissue",
+      "specialty": "Dermatology"
+    },
+    {
+      "code": "M79.3",
+      "description": "Panniculitis, unspecified",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the musculoskeletal system",
+      "specialty": "Rheumatology"
+    },
+    {
+      "code": "N39.0",
+      "description": "Urinary tract infection, site not specified",
+      "code_type": "Diagnosis",
+      "chapter": "Diseases of the genitourinary system",
+      "specialty": "Urology"
+    },
+    {
+      "code": "O80",
+      "description": "Encounter for full-term uncomplicated delivery",
+      "code_type": "Diagnosis",
+      "chapter": "Pregnancy, childbirth and the puerperium",
+      "specialty": "Obstetrics"
+    },
+    {
+      "code": "P07.37",
+      "description": "Other preterm newborn, gestational age 36 completed weeks",
+      "code_type": "Diagnosis",
+      "chapter": "Certain conditions originating in the perinatal period",
+      "specialty": "Neonatology"
+    },
+    {
+      "code": "Q21.0",
+      "description": "Ventricular septal defect",
+      "code_type": "Diagnosis",
+      "chapter": "Congenital malformations, deformations and chromosomal abnormalities",
+      "specialty": "Cardiology"
+    },
+    {
+      "code": "R06.02",
+      "description": "Shortness of breath",
+      "code_type": "Diagnosis",
+      "chapter": "Symptoms, signs and abnormal clinical and laboratory findings",
+      "specialty": "Primary Care"
+    },
+    {
+      "code": "S72.001A",
+      "description": "Fracture of unspecified part of neck of right femur, initial encounter for closed fracture",
+      "code_type": "Diagnosis",
+      "chapter": "Injury, poisoning and certain other consequences of external causes",
+      "specialty": "Orthopedics"
+    },
+    {
+      "code": "Z51.11",
+      "description": "Encounter for antineoplastic chemotherapy",
+      "code_type": "Diagnosis",
+      "chapter": "Factors influencing health status and contact with health services",
+      "specialty": "Oncology"
+    }
+  ],
+  "hcpcs_codes": [
+    {
+      "code": "H0001",
+      "description": "Behavioral health screening to determine eligibility for admission to treatment program",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0002",
+      "description": "Behavioral health counseling and therapy, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0004",
+      "description": "Behavioral health prevention program, non-physician provider, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0005",
+      "description": "Behavioral health day treatment, partial hospitalization, per diem",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0006",
+      "description": "Behavioral health short-term residential, non-hospital residential treatment program, per diem",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0007",
+      "description": "Behavioral health long-term residential, non-hospital residential treatment program, per diem",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0008",
+      "description": "Behavioral health clinic visit, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0009",
+      "description": "Behavioral health case management, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0010",
+      "description": "Behavioral health peer support services, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0011",
+      "description": "Behavioral health crisis intervention, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0012",
+      "description": "Behavioral health family psychoeducation, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0013",
+      "description": "Behavioral health medication training and support, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0014",
+      "description": "Behavioral health supported employment, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0015",
+      "description": "Behavioral health supported housing, per 15 minutes",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0016",
+      "description": "Behavioral health intensive outpatient treatment, per diem",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "H0017",
+      "description": "Behavioral health assertive community treatment, per diem",
+      "level": "Level II",
+      "category": "Mental Health Services",
+      "specialty": "Psychiatry"
+    },
+    {
+      "code": "E0424",
+      "description": "Stationary compressed gaseous oxygen system, rental; includes container, contents, regulator, flowmeter, humidifier, nebulizer, cannula or mask, and tubing",
+      "level": "Level II",
+      "category": "Durable Medical Equipment",
+      "specialty": "Pulmonology"
+    },
+    {
+      "code": "E0470",
+      "description": "Respiratory assist device, bi-level pressure capability, without backup rate feature, used with noninvasive interface",
+      "level": "Level II",
+      "category": "Durable Medical Equipment",
+      "specialty": "Pulmonology"
+    },
+    {
+      "code": "E0601",
+      "description": "Continuous positive airway pressure (CPAP) device",
+      "level": "Level II",
+      "category": "Durable Medical Equipment",
+      "specialty": "Pulmonology"
+    },
+    {
+      "code": "E1390",
+      "description": "Oxygen concentrator, single delivery port, capable of delivering 85 percent or greater oxygen concentration at the prescribed flow rate",
+      "level": "Level II",
+      "category": "Durable Medical Equipment",
+      "specialty": "Pulmonology"
+    },
+    {
+      "code": "L0112",
+      "description": "Cranial cervical orthosis, congenital torticollis type, with or without soft interface material, adjustable range of motion joint, custom fabricated",
+      "level": "Level II",
+      "category": "Prosthetics and Orthotics",
+      "specialty": "Orthopedics"
+    },
+    {
+      "code": "L3806",
+      "description": "Wrist hand finger orthosis, includes one or more nontorsion joints, turnbuckles, elastic bands/springs, may include soft interface material",
+      "level": "Level II",
+      "category": "Prosthetics and Orthotics",
+      "specialty": "Orthopedics"
+    },
+    {
+      "code": "L5856",
+      "description": "Addition to lower extremity prosthesis, endoskeletal knee-shin system, microprocessor control feature, swing and stance phase",
+      "level": "Level II",
+      "category": "Prosthetics and Orthotics",
+      "specialty": "Orthopedics"
+    },
+    {
+      "code": "A0425",
+      "description": "Ground mileage, per statute mile",
+      "level": "Level II",
+      "category": "Ambulance Services",
+      "specialty": "Emergency Medicine"
+    },
+    {
+      "code": "A0427",
+      "description": "Ambulance service, advanced life support, emergency transport, level 1 (ALS 1)",
+      "level": "Level II",
+      "category": "Ambulance Services",
+      "specialty": "Emergency Medicine"
+    },
+    {
+      "code": "J0135",
+      "description": "Injection, adalimumab, 20 mg",
+      "level": "Level II",
+      "category": "Drugs Administered Other Than Oral Method",
+      "specialty": "Rheumatology"
+    },
+    {
+      "code": "J0171",
+      "description": "Injection, adalimumab-atto, biosimilar product (Amjevita), 20 mg",
+      "level": "Level II",
+      "category": "Drugs Administered Other Than Oral Method",
+      "specialty": "Rheumatology"
+    },
+    {
+      "code": "J1745",
+      "description": "Injection, infliximab, excludes biosimilar, 10 mg",
+      "level": "Level II",
+      "category": "Drugs Administered Other Than Oral Method",
+      "specialty": "Gastroenterology"
+    },
+    {
+      "code": "J3357",
+      "description": "Injection, ustekinumab, 1 mg",
+      "level": "Level II",
+      "category": "Drugs Administered Other Than Oral Method",
+      "specialty": "Dermatology"
+    }
+  ],
+  "last_updated": "2025-08-12T18:51:04.643612",
+  "total_codes": 100
+}
