@@ -1,95 +1,41 @@
+#!/usr/bin/env python3
 """
 Initial database schema migration
-Creates all tables for medical codes
+Creates all tables for the Medical Codes application
 """
 
-from sqlalchemy import create_engine, text
+import sys
 import os
 
+# Add the backend directory to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
+
+from app.database import engine, Base
+from app.models import CPTCode, ICD10Code, HCPCSCode, ModifierCode
+
 def run_migration():
-    """Run the initial migration to create all tables"""
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://medicalcodes:secure_password_123@localhost:15432/medical_codes")
-    engine = create_engine(DATABASE_URL)
+    """Create all database tables"""
+    print("Creating database tables...")
     
-    with engine.connect() as conn:
-        # Create CPT codes table
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS cpt_codes (
-                id SERIAL PRIMARY KEY,
-                code VARCHAR(10) UNIQUE NOT NULL,
-                description TEXT NOT NULL,
-                category VARCHAR(50),
-                section VARCHAR(100),
-                subsection VARCHAR(200),
-                is_active VARCHAR(1) DEFAULT 'Y',
-                effective_date TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
+    try:
+        # Create all tables
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created successfully!")
         
-        # Create ICD-10 codes table
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS icd10_codes (
-                id SERIAL PRIMARY KEY,
-                code VARCHAR(10) UNIQUE NOT NULL,
-                description TEXT NOT NULL,
-                code_type VARCHAR(20),
-                chapter VARCHAR(200),
-                block VARCHAR(200),
-                is_billable VARCHAR(1) DEFAULT 'Y',
-                is_active VARCHAR(1) DEFAULT 'Y',
-                effective_date TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
+        # Verify tables were created
+        inspector = engine.dialect.inspector(engine)
+        tables = inspector.get_table_names()
         
-        # Create HCPCS codes table
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS hcpcs_codes (
-                id SERIAL PRIMARY KEY,
-                code VARCHAR(10) UNIQUE NOT NULL,
-                description TEXT NOT NULL,
-                level VARCHAR(10),
-                category VARCHAR(100),
-                coverage_status VARCHAR(50),
-                is_active VARCHAR(1) DEFAULT 'Y',
-                effective_date TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
-        
-        # Create Modifier codes table
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS modifier_codes (
-                id SERIAL PRIMARY KEY,
-                modifier VARCHAR(5) UNIQUE NOT NULL,
-                description TEXT NOT NULL,
-                category VARCHAR(50),
-                applies_to VARCHAR(200),
-                is_active VARCHAR(1) DEFAULT 'Y',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
-        
-        # Create indexes for better performance
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cpt_code ON cpt_codes(code)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cpt_description ON cpt_codes(description)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cpt_category ON cpt_codes(category)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cpt_section ON cpt_codes(section)"))
-        
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_icd10_code ON icd10_codes(code)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_icd10_description ON icd10_codes(description)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_icd10_chapter ON icd10_codes(chapter)"))
-        
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_hcpcs_code ON hcpcs_codes(code)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_hcpcs_description ON hcpcs_codes(description)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_hcpcs_category ON hcpcs_codes(category)"))
-        
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_modifier_code ON modifier_codes(modifier)"))
-        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_modifier_description ON modifier_codes(description)"))
-        
-        conn.commit()
-        print("Initial migration completed successfully!")
+        expected_tables = ['cpt_codes', 'icd10_codes', 'hcpcs_codes', 'modifier_codes']
+        for table in expected_tables:
+            if table in tables:
+                print(f"✅ Table '{table}' created")
+            else:
+                print(f"❌ Table '{table}' not found")
+                
+    except Exception as e:
+        print(f"❌ Error creating tables: {e}")
+        raise
 
 if __name__ == "__main__":
     run_migration() 

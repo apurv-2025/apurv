@@ -8,6 +8,9 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://medicalcodes:secure_passw
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Create Base class
+Base = declarative_base()
+
 # Dependency
 def get_db():
     db = SessionLocal()

@@ -1,8 +1,6 @@
 from sqlalchemy import Column, String, Text, Integer, DateTime, Index
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
-Base = declarative_base()
+from .database import Base
 
 class CPTCode(Base):
     __tablename__ = "cpt_codes"

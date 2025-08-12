@@ -1,1 +1,1 @@
-# Database Migrations 
+# Migrations package 

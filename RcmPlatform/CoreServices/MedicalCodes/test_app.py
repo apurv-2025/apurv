@@ -9,7 +9,7 @@ import sys
 
 def test_backend():
     """Test the backend API endpoints"""
-    base_url = "http://localhost:8000"
+    base_url = "http://localhost:8003"  # Updated to match docker-compose port
     
     print("Testing Backend API...")
     
@@ -55,7 +55,7 @@ def test_backend():
 
 def test_frontend():
     """Test the frontend application"""
-    frontend_url = "http://localhost:3000"
+    frontend_url = "http://localhost:3003"  # Updated to match docker-compose port
     
     print("\nTesting Frontend...")
     
@@ -83,9 +83,9 @@ def main():
     if backend_ok and frontend_ok:
         print("🎉 All tests passed! Application is working correctly.")
         print("\nAccess the application at:")
-        print("- Frontend: http://localhost:3000")
-        print("- Backend API: http://localhost:8000")
-        print("- API Documentation: http://localhost:8000/docs")
+        print("- Frontend: http://localhost:3003")
+        print("- Backend API: http://localhost:8003")
+        print("- API Documentation: http://localhost:8003/docs")
     else:
         print("❌ Some tests failed. Please check the logs above.")
         sys.exit(1)

@@ -12,14 +12,54 @@ fi
 
 # Check if docker-compose is available
 if ! command -v docker-compose &> /dev/null; then
-    echo "❌ docker-compose is not installed. Please install it first."
+    if ! command -v docker &> /dev/null; then
+        echo "❌ Docker is not installed. Please install Docker first."
+        exit 1
+    fi
+    echo "📦 Using 'docker compose' (newer version)..."
+    DOCKER_COMPOSE_CMD="docker compose"
+else
+    echo "📦 Using 'docker-compose'..."
+    DOCKER_COMPOSE_CMD="docker-compose"
+fi
+
+echo "🛑 Stopping any existing containers..."
+$DOCKER_COMPOSE_CMD down
+
+echo "📦 Starting services with Docker Compose..."
+$DOCKER_COMPOSE_CMD up -d
+
+echo "⏳ Waiting for database to be ready..."
+sleep 15
+
+echo "🗄️ Initializing database..."
+# Run database initialization
+docker exec -it medicalcodes-backend-1 python -c "
+import sys
+import os
+sys.path.append('/app')
+
+# Create tables
+from app.database import engine, Base
+from app.models import CPTCode, ICD10Code, HCPCSCode, ModifierCode
+Base.metadata.create_all(bind=engine)
+print('✅ Database tables created')
+
+# Seed data
+from seed_data import seed_database
+seed_database()
+print('✅ Database seeded successfully')
+"
+
+if [ $? -eq 0 ]; then
+    echo "✅ Database initialization completed"
+else
+    echo "❌ Database initialization failed"
+    echo "Check the logs with: $DOCKER_COMPOSE_CMD logs backend"
     exit 1
 fi
 
-echo "📦 Starting services with Docker Compose..."
-docker-compose up -d
-
-echo "⏳ Waiting for services to start..."
+echo "⏳ Waiting for services to fully start..."
 sleep 10
 
 echo "🔍 Testing application..."
@@ -31,13 +71,14 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "Access the application at:"
     echo "  Frontend: http://localhost:3000"
-    echo "  Backend API: http://localhost:8000"
-    echo "  API Documentation: http://localhost:8000/docs"
+    echo "  Backend API: http://localhost:8001"
+    echo "  API Documentation: http://localhost:8001/docs"
     echo ""
-    echo "To stop the application, run: docker-compose down"
+    echo "To stop the application, run: $DOCKER_COMPOSE_CMD down"
+    echo "To view logs, run: $DOCKER_COMPOSE_CMD logs -f"
 else
     echo ""
     echo "❌ Application failed to start properly."
-    echo "Check the logs with: docker-compose logs"
+    echo "Check the logs with: $DOCKER_COMPOSE_CMD logs"
     exit 1
 fi 
