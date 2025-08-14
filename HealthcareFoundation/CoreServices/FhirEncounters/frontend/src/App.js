@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, Filter, Calendar, User, FileText, Activity } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001';
 
 // Utility functions
 const formatDate = (dateString) => {
@@ -22,13 +22,17 @@ const Navigation = ({ activeTab, setActiveTab }) => {
     { id: 'conditions', label: 'Conditions', icon: FileText }
   ];
 
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+  };
+
   return (
     <nav className="bg-blue-600 text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
             <User className="h-8 w-8" />
-            <h1 className="text-xl font-bold">FHIR Management System</h1>
+            <h1 className="text-xl font-bold">Encounter Management System</h1>
           </div>
           <div className="flex space-x-1">
             {tabs.map((tab) => {
@@ -36,7 +40,7 @@ const Navigation = ({ activeTab, setActiveTab }) => {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabClick(tab.id)}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                     activeTab === tab.id
                       ? 'bg-blue-800 text-white'
@@ -81,6 +85,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 const Encounters = () => {
   const [encounters, setEncounters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEncounter, setEditingEncounter] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,11 +102,17 @@ const Encounters = () => {
 
   const fetchEncounters = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch(`${API_BASE_URL}/encounters/`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setEncounters(data);
     } catch (error) {
       console.error('Error fetching encounters:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -109,7 +120,7 @@ const Encounters = () => {
 
   useEffect(() => {
     fetchEncounters();
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -119,19 +130,43 @@ const Encounters = () => {
       : `${API_BASE_URL}/encounters/`;
 
     try {
+      let requestData;
+      if (editingEncounter) {
+        // For updates, only send allowed fields
+        requestData = {
+          status: formData.status,
+          period_start: formData.period_start ? `${formData.period_start}T00:00:00Z` : null,
+          period_end: formData.period_end ? `${formData.period_end}T00:00:00Z` : null
+        };
+      } else {
+        // For creates, send all required fields
+        requestData = {
+          fhir_id: formData.fhir_id,
+          status: formData.status,
+          subject_patient_id: formData.subject_patient_id,
+          period_start: formData.period_start ? `${formData.period_start}T00:00:00Z` : null,
+          period_end: formData.period_end ? `${formData.period_end}T00:00:00Z` : null
+        };
+      }
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestData)
       });
 
       if (response.ok) {
         fetchEncounters();
         setIsModalOpen(false);
         resetForm();
+      } else {
+        const errorData = await response.json();
+        console.error('Error saving encounter:', errorData);
+        alert(`Error: ${errorData.detail || 'Failed to save encounter'}`);
       }
     } catch (error) {
       console.error('Error saving encounter:', error);
+      alert('Error saving encounter');
     }
   };
 
@@ -175,7 +210,33 @@ const Encounters = () => {
   );
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading encounters...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p className="font-bold">Error loading encounters:</p>
+          <p>{error}</p>
+          <button 
+            onClick={fetchEncounters}
+            className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -344,6 +405,7 @@ const Encounters = () => {
 const Observations = () => {
   const [observations, setObservations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingObservation, setEditingObservation] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -364,11 +426,17 @@ const Observations = () => {
 
   const fetchObservations = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch(`${API_BASE_URL}/observations/`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setObservations(data);
     } catch (error) {
       console.error('Error fetching observations:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -376,7 +444,7 @@ const Observations = () => {
 
   useEffect(() => {
     fetchObservations();
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -386,19 +454,49 @@ const Observations = () => {
       : `${API_BASE_URL}/observations/`;
 
     try {
+      let requestData;
+      if (editingObservation) {
+        // For updates, only send allowed fields
+        requestData = {
+          status: formData.status,
+          effective_date_time: formData.effective_date_time ? `${formData.effective_date_time}T00:00:00Z` : null,
+          value_quantity_value: formData.value_quantity_value ? parseFloat(formData.value_quantity_value) : null,
+          value_quantity_unit: formData.value_quantity_unit || null,
+          value_string: formData.value_string || null
+        };
+      } else {
+        // For creates, send all required fields
+        requestData = {
+          fhir_id: formData.fhir_id,
+          status: formData.status,
+          code: formData.code,
+          subject_patient_id: formData.subject_patient_id,
+          encounter_id: formData.encounter_id || null,
+          effective_date_time: formData.effective_date_time ? `${formData.effective_date_time}T00:00:00Z` : null,
+          value_quantity_value: formData.value_quantity_value ? parseFloat(formData.value_quantity_value) : null,
+          value_quantity_unit: formData.value_quantity_unit || null,
+          value_string: formData.value_string || null
+        };
+      }
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestData)
       });
 
       if (response.ok) {
         fetchObservations();
         setIsModalOpen(false);
         resetForm();
+      } else {
+        const errorData = await response.json();
+        console.error('Error saving observation:', errorData);
+        alert(`Error: ${errorData.detail || 'Failed to save observation'}`);
       }
     } catch (error) {
       console.error('Error saving observation:', error);
+      alert('Error saving observation');
     }
   };
 
@@ -450,7 +548,33 @@ const Observations = () => {
   );
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading observations...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p className="font-bold">Error loading observations:</p>
+          <p>{error}</p>
+          <button 
+            onClick={fetchObservations}
+            className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -683,6 +807,7 @@ const Observations = () => {
 const Conditions = () => {
   const [conditions, setConditions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCondition, setEditingCondition] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -703,11 +828,17 @@ const Conditions = () => {
 
   const fetchConditions = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch(`${API_BASE_URL}/conditions/`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setConditions(data);
     } catch (error) {
       console.error('Error fetching conditions:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -715,7 +846,7 @@ const Conditions = () => {
 
   useEffect(() => {
     fetchConditions();
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -725,19 +856,47 @@ const Conditions = () => {
       : `${API_BASE_URL}/conditions/`;
 
     try {
+      let requestData;
+      if (editingCondition) {
+        // For updates, only send allowed fields
+        requestData = {
+          clinical_status: formData.clinical_status || null,
+          verification_status: formData.verification_status || null,
+          onset_date_time: formData.onset_date_time ? `${formData.onset_date_time}T00:00:00Z` : null,
+          recorded_date: formData.recorded_date || null
+        };
+      } else {
+        // For creates, send all required fields
+        requestData = {
+          fhir_id: formData.fhir_id,
+          clinical_status: formData.clinical_status || null,
+          verification_status: formData.verification_status || null,
+          code: formData.code,
+          subject_patient_id: formData.subject_patient_id,
+          encounter_id: formData.encounter_id || null,
+          onset_date_time: formData.onset_date_time ? `${formData.onset_date_time}T00:00:00Z` : null,
+          recorded_date: formData.recorded_date || null
+        };
+      }
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestData)
       });
 
       if (response.ok) {
         fetchConditions();
         setIsModalOpen(false);
         resetForm();
+      } else {
+        const errorData = await response.json();
+        console.error('Error saving condition:', errorData);
+        alert(`Error: ${errorData.detail || 'Failed to save condition'}`);
       }
     } catch (error) {
       console.error('Error saving condition:', error);
+      alert('Error saving condition');
     }
   };
 
@@ -787,7 +946,33 @@ const Conditions = () => {
   );
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading conditions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p className="font-bold">Error loading conditions:</p>
+          <p>{error}</p>
+          <button 
+            onClick={fetchConditions}
+            className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
